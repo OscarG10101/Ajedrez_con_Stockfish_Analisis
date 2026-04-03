@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>Ajedrez_interactuable_con_form</RootNamespace>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Imagenes\AlfilBlanco.png" />
+    <None Remove="Imagenes\AlfilNegro.png" />
+    <None Remove="Imagenes\CaballoBlanco.png" />
+    <None Remove="Imagenes\CaballoNegro.png" />
+    <None Remove="Imagenes\DamaBlanca.png" />
+    <None Remove="Imagenes\DamaNegra.png" />
+    <None Remove="Imagenes\PeonBlanco.png" />
+    <None Remove="Imagenes\PeonNegro.png" />
+    <None Remove="Imagenes\ReyBlanco.png" />
+    <None Remove="Imagenes\ReyNegro.png" />
+    <None Remove="Imagenes\TorreBlanca.png" />
+    <None Remove="Imagenes\TorreNegra.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Imagenes\AlfilNegro.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Imagenes\AlfilBlanco.png" />
+    <Resource Include="Imagenes\CaballoBlanco.png" />
+    <Resource Include="Imagenes\CaballoNegro.png" />
+    <Resource Include="Imagenes\DamaBlanca.png" />
+    <Resource Include="Imagenes\DamaNegra.png" />
+    <Resource Include="Imagenes\PeonBlanco.png" />
+    <Resource Include="Imagenes\PeonNegro.png" />
+    <Resource Include="Imagenes\ReyBlanco.png" />
+    <Resource Include="Imagenes\ReyNegro.png" />
+    <Resource Include="Imagenes\TorreBlanca.png" />
+    <Resource Include="Imagenes\TorreNegra.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>
