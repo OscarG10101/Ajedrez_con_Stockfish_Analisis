@@ -65,9 +65,20 @@ namespace Ajedrez_interactuable_con_form
             motor.Evaluacion_Actualizada += Motor_Evaluacion_Actualizada;
 
             // Leer README
-            string rutaStockfish = @"Stockfish\stockfish-windows-x86-64-avx2.exe";
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string carpeta = Path.Combine(baseDir, @"..\..\..\Stockfish");
+            carpeta = Path.GetFullPath(carpeta);
 
-            motor.Iniciar(rutaStockfish);
+            if (!Directory.Exists(carpeta))
+                throw new DirectoryNotFoundException($"No se encontró la carpeta: {carpeta}");
+
+            var files = Directory.GetFiles(carpeta, "stockfish*.exe");
+            if (files.Length == 0)
+                throw new FileNotFoundException($"No se encontró ningún ejecutable de Stockfish en: {carpeta}");
+
+            string exe = files[0];
+            motor.Iniciar(exe);
+
 
 
             CargarImagenes();
@@ -333,26 +344,26 @@ namespace Ajedrez_interactuable_con_form
                 if (eval == 10000)
                 {
                     comentario = "¡Me ganaste!";
-                    nuevaImagen = Properties.Resources.AndreaPierde;
+                    //nuevaImagen = Properties.Resources.AndreaPierde;
                 }
                 else if (eval > 50) // ventaja IA
                 {
                     comentario = "¡Vas a perder!";
-                    nuevaImagen = Properties.Resources.AndreaBuenaJugadaCallando;
+                    //nuevaImagen = Properties.Resources.AndreaBuenaJugadaCallando;
                 }
                 else if (eval < -50) // ventaja jugador
                 {
                     comentario = "¡Bien hecho!";
-                    nuevaImagen = Properties.Resources.AndreaMenu;
+                    //nuevaImagen = Properties.Resources.AndreaMenu;
                 }
                 else
                 {
                     comentario = "Esto está parejo...";
-                    nuevaImagen = Properties.Resources.AndreaMenu;
+                    //nuevaImagen = Properties.Resources.AndreaMenu;
                 }
 
                 comentarioActual = comentario; // Actualizar comentario y imagen
-                PbxRival.Image = nuevaImagen; 
+                //PbxRival.Image = nuevaImagen; 
                 this.Invalidate(); // repinta el Form para mostrar el globo con el nuevo comentario
             });
         }

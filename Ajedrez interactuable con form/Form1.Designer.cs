@@ -64,7 +64,6 @@
             // 
             // PbxRival
             // 
-            PbxRival.Image = Properties.Resources.AndreaBuenaJugadaCallando;
             PbxRival.Location = new Point(1016, 120);
             PbxRival.Name = "PbxRival";
             PbxRival.Size = new Size(522, 400);

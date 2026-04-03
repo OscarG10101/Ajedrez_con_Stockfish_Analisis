@@ -124,14 +124,8 @@
   <data name="AlfilNegro" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Imagenes\AlfilNegro.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="AndreaBuenaJugadaCallando" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Imagenes\Andrea\AndreaBuenaJugada.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="AndreaMenu" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Imagenes\Andrea\AndreaAjedrez.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="AndreaPierde" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Imagenes\Andrea\AndreaPierde.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Andrea" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Imagenes\Andrea\Andrea.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="CaballoBlanco" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Imagenes\CaballoBlanco.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

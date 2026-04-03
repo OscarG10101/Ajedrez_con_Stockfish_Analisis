@@ -83,29 +83,9 @@ namespace Ajedrez_interactuable_con_form.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap AndreaBuenaJugadaCallando {
+        internal static System.Drawing.Bitmap Andrea {
             get {
-                object obj = ResourceManager.GetObject("AndreaBuenaJugadaCallando", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap AndreaMenu {
-            get {
-                object obj = ResourceManager.GetObject("AndreaMenu", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap AndreaPierde {
-            get {
-                object obj = ResourceManager.GetObject("AndreaPierde", resourceCulture);
+                object obj = ResourceManager.GetObject("Andrea", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

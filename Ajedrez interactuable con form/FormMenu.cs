@@ -18,7 +18,7 @@ namespace Ajedrez_interactuable_con_form
         {
             InitializeComponent();
 
-            PbxAndrea.Image = Properties.Resources.AndreaMenu;
+            PbxAndrea.Image = Properties.Resources.Andrea;
         }
         public enum TipoRival
         {
