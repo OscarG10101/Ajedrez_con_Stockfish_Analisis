@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Ajedrez_interactuable_con_form
+namespace Ajedrez_interactuable_con_form.Modelos
 {
     public enum TipoPieza
     {
@@ -18,7 +18,7 @@ namespace Ajedrez_interactuable_con_form
         Dama,
         Rey
     }
-    internal class Piezas
+    public class Pieza
     {
         // Diccionario para mapear tipos de piezas y colores a imágenes
         public static Dictionary<(TipoPieza, bool), Image> ImagenesPiezas;
@@ -36,7 +36,7 @@ namespace Ajedrez_interactuable_con_form
         public TipoPieza Tipo { get; set; } // "peon", "alfil", etc.
 
         // Constructor: se llama cuando creamos la instancia
-        public Piezas(int fila, int columna, bool esBlanca, TipoPieza tipo)
+        public Pieza(int fila, int columna, bool esBlanca, TipoPieza tipo)
         {
             Fila = fila;
             Columna = columna;
@@ -58,7 +58,6 @@ namespace Ajedrez_interactuable_con_form
             // Buscar la imagen correcta del diccionario estático
             Image img = Form1.imagenesPiezas[(Tipo, EsBlanca)];
 
-            // Dibujar la imagen redimensionada
             g.DrawImage(img, rect);
 
             if (PosX < 0 && PosY < 0)

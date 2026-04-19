@@ -7,6 +7,9 @@ using System.Windows.Forms;
 using System.IO;
 
 using static Ajedrez_interactuable_con_form.FormMenu;
+using Ajedrez_interactuable_con_form.Modelos;
+using Ajedrez_interactuable_con_form.Vistas;
+using Ajedrez_interactuable_con_form.Servicios;
 
 namespace Ajedrez_interactuable_con_form
 {
@@ -61,8 +64,8 @@ namespace Ajedrez_interactuable_con_form
             };
 
             motor = new StockfishMotor();
-            motor.BestMove_Encontrado += Motor_BestMove_Encontrado; // Eventos se suscriben a métodos
-            motor.Evaluacion_Actualizada += Motor_Evaluacion_Actualizada;
+            motor.BestMove_Encontrado += OnBestMove_Motor; // Eventos se suscriben a métodos
+            motor.Evaluacion_Actualizada += OnEvaluacionActualizada_Motor;
 
             // Leer README
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -81,9 +84,9 @@ namespace Ajedrez_interactuable_con_form
 
 
 
-            CargarImagenes();
+            CargarImagenesPiezas();
         }
-        private void Motor_BestMove_Encontrado(string BestMove) //método para iniciar el proceso de Stockfish en segundo plano
+        private void OnBestMove_Motor(string BestMove) //método para iniciar el proceso de Stockfish en segundo plano
         {
             this.Invoke((MethodInvoker)delegate
             {
@@ -99,7 +102,7 @@ namespace Ajedrez_interactuable_con_form
         {
             motor.Cerrar();
         }
-        private void CargarImagenes()
+        private void CargarImagenesPiezas()
         {
             imagenesPiezas = new Dictionary<(TipoPieza, bool), Image>
             {
@@ -118,7 +121,7 @@ namespace Ajedrez_interactuable_con_form
             };
 
             // Asignamos al diccionario estático de la clase Piezas
-            Piezas.ImagenesPiezas = imagenesPiezas;
+            Pieza.ImagenesPiezas = imagenesPiezas;
         }
         private void CrearTableroBitmap()
         {
@@ -190,20 +193,18 @@ namespace Ajedrez_interactuable_con_form
                 casillaSeleccionadaFila = fila;
                 casillaSeleccionadaColumna = col;
 
-                var todasJugadas = await motor.ObtenerJugadasLegalesAsync(historialJugadas);
-
-                string origen = CasillaToTexto(fila, col);
-                movimientosPosibles = todasJugadas
-                                      .Where(j => j.StartsWith(origen))
+                string casillaOrigen = CasillaToTexto(fila, col);
+                movimientosPosibles = (await motor.PedirJugadasLegalesAsync(historialJugadas))
+                                      .Where(j => j.StartsWith(casillaOrigen))
                                       .ToList();
             }
             else
             {
-                // casilla de destino seleccionada
+                // coordenadas completas "e2e4"
                 string jugada = $"{CasillaToTexto(casillaSeleccionadaFila, casillaSeleccionadaColumna)}" +
                                 $"{CasillaToTexto(fila, col)}";
 
-                if (await motor.EsJugadaValidaAsync(jugada, historialJugadas))
+                if(movimientosPosibles.Contains(jugada))
                 {
                     // Obtener la pieza a mover
                     var pieza = juego.Tablero[casillaSeleccionadaFila, casillaSeleccionadaColumna];
@@ -253,16 +254,12 @@ namespace Ajedrez_interactuable_con_form
                 historialJugadas.Add(jugadaUsuario);
                 LbxHistorial.Items.Add("Blancas: " + jugadaUsuario);
             });
-            // Enviamos posición a Stockfish
-            string lineaPosition = "position startpos moves " + string.Join(" ", historialJugadas);
-            motor.EnviarComando(lineaPosition);
-
-            int profundidad = rival == TipoRival.Andrea ? 6 : 12; // ejemplo: Andrea = más fácil/menos profundidad
-
-            motor.EnviarComando($"go depth {profundidad}");
+            
+            int profundidad = rival == TipoRival.Andrea ? 10 : 15;
+            motor.PedirBestMove(historialJugadas, profundidad);
         }
 
-        private void MostrarMenuCoronacion(int filaDestino, int colDestino, Piezas peon, Action<char> onElegir)
+        private void MostrarMenuCoronacion(int filaDestino, int colDestino, Pieza peon, Action<char> onElegir)
         {
             var menu = new ContextMenuStrip();
 
@@ -296,7 +293,7 @@ namespace Ajedrez_interactuable_con_form
             int y = filaDestino * size;
             menu.Show(panelTablero, new Point(x, y));
         }
-        private async Task AnimarMovimiento(Piezas pieza, int filaDestino, int colDestino)
+        private async Task AnimarMovimiento(Pieza pieza, int filaDestino, int colDestino)
         {
             float destinoX = colDestino * tamaño;
             float destinoY = filaDestino * tamaño;
@@ -333,7 +330,7 @@ namespace Ajedrez_interactuable_con_form
                 globo.Dibujar(e.Graphics, areaGlobo, comentarioActual);
             }
         }
-        private void Motor_Evaluacion_Actualizada(int eval)
+        private void OnEvaluacionActualizada_Motor(int eval)
         {
             // quedó pendiente cambiar la imagen del globo y el texto según la evaluación
             this.Invoke((MethodInvoker)delegate

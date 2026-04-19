@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Ajedrez_interactuable_con_form
+namespace Ajedrez_interactuable_con_form.Modelos
 {
     internal class JuegoAjedrez
     {
-        public Piezas[,] Tablero { get; private set; } = new Piezas[8, 8];
+        public Pieza[,] Tablero { get; private set; } = new Pieza[8, 8];
         public List<string> Historial { get; private set; } = new List<string>();
 
         // Evento que notifica que se movió una pieza
@@ -17,7 +17,7 @@ namespace Ajedrez_interactuable_con_form
         // Evento para pedir redibujar el tablero
         public event Action TableroActualizado;
 
-        public Action<int, int, Piezas, Action<char>> MostrarMenuCoronacionUI;
+        public Action<int, int, Pieza, Action<char>> MostrarMenuCoronacionUI;
 
 
         public JuegoAjedrez()
@@ -30,8 +30,8 @@ namespace Ajedrez_interactuable_con_form
             // Inicializar peones
             for (int col = 0; col < 8; col++)
             {
-                Tablero[6, col] = new Piezas(6, col, true, TipoPieza.Peon);
-                Tablero[1, col] = new Piezas(1, col, false, TipoPieza.Peon);
+                Tablero[6, col] = new Pieza(6, col, true, TipoPieza.Peon);
+                Tablero[1, col] = new Pieza(1, col, false, TipoPieza.Peon);
             }
 
             // Piezas mayores
@@ -44,7 +44,7 @@ namespace Ajedrez_interactuable_con_form
         private void ColocarFila(TipoPieza[] piezas, int fila, bool esBlanco)
         {
             for (int col = 0; col < piezas.Length; col++)
-                Tablero[fila, col] = new Piezas(fila, col, esBlanco, piezas[col]);
+                Tablero[fila, col] = new Pieza(fila, col, esBlanco, piezas[col]);
         }
 
         public void MoverPieza(string jugada, bool EsHumano, Action<char> coronacionCallback = null)
@@ -101,7 +101,7 @@ namespace Ajedrez_interactuable_con_form
                 }
                 else
                 {
-                    char promocion = (jugada.Length == 5) ? jugada[4] : 'q'; // stockfish manda e7e8q
+                    char promocion = jugada.Length == 5 ? jugada[4] : 'q'; // stockfish manda e7e8q
                     switch (promocion)
                     {
                         case 'q': pieza.Tipo = TipoPieza.Dama; break;

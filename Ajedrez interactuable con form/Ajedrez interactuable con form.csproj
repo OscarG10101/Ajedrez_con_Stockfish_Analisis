@@ -10,36 +10,36 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Imagenes\AlfilBlanco.png" />
-    <None Remove="Imagenes\AlfilNegro.png" />
-    <None Remove="Imagenes\CaballoBlanco.png" />
-    <None Remove="Imagenes\CaballoNegro.png" />
-    <None Remove="Imagenes\DamaBlanca.png" />
-    <None Remove="Imagenes\DamaNegra.png" />
-    <None Remove="Imagenes\PeonBlanco.png" />
-    <None Remove="Imagenes\PeonNegro.png" />
-    <None Remove="Imagenes\ReyBlanco.png" />
-    <None Remove="Imagenes\ReyNegro.png" />
-    <None Remove="Imagenes\TorreBlanca.png" />
-    <None Remove="Imagenes\TorreNegra.png" />
+    <None Remove="Recursos\Imagenes\AlfilBlanco.png" />
+    <None Remove="Recursos\Imagenes\AlfilNegro.png" />
+    <None Remove="Recursos\Imagenes\CaballoBlanco.png" />
+    <None Remove="Recursos\Imagenes\CaballoNegro.png" />
+    <None Remove="Recursos\Imagenes\DamaBlanca.png" />
+    <None Remove="Recursos\Imagenes\DamaNegra.png" />
+    <None Remove="Recursos\Imagenes\PeonBlanco.png" />
+    <None Remove="Recursos\Imagenes\PeonNegro.png" />
+    <None Remove="Recursos\Imagenes\ReyBlanco.png" />
+    <None Remove="Recursos\Imagenes\ReyNegro.png" />
+    <None Remove="Recursos\Imagenes\TorreBlanca.png" />
+    <None Remove="Recursos\Imagenes\TorreNegra.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Imagenes\AlfilNegro.png" />
+    <Resource Include="Recursos\Imagenes\AlfilNegro.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Imagenes\AlfilBlanco.png" />
-    <Resource Include="Imagenes\CaballoBlanco.png" />
-    <Resource Include="Imagenes\CaballoNegro.png" />
-    <Resource Include="Imagenes\DamaBlanca.png" />
-    <Resource Include="Imagenes\DamaNegra.png" />
-    <Resource Include="Imagenes\PeonBlanco.png" />
-    <Resource Include="Imagenes\PeonNegro.png" />
-    <Resource Include="Imagenes\ReyBlanco.png" />
-    <Resource Include="Imagenes\ReyNegro.png" />
-    <Resource Include="Imagenes\TorreBlanca.png" />
-    <Resource Include="Imagenes\TorreNegra.png" />
+    <Resource Include="Recursos\Imagenes\AlfilBlanco.png" />
+    <Resource Include="Recursos\Imagenes\CaballoBlanco.png" />
+    <Resource Include="Recursos\Imagenes\CaballoNegro.png" />
+    <Resource Include="Recursos\Imagenes\DamaBlanca.png" />
+    <Resource Include="Recursos\Imagenes\DamaNegra.png" />
+    <Resource Include="Recursos\Imagenes\PeonBlanco.png" />
+    <Resource Include="Recursos\Imagenes\PeonNegro.png" />
+    <Resource Include="Recursos\Imagenes\ReyBlanco.png" />
+    <Resource Include="Recursos\Imagenes\ReyNegro.png" />
+    <Resource Include="Recursos\Imagenes\TorreBlanca.png" />
+    <Resource Include="Recursos\Imagenes\TorreNegra.png" />
   </ItemGroup>
 
   <ItemGroup>

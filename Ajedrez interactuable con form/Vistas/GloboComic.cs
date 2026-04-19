@@ -1,7 +1,7 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace Ajedrez_interactuable_con_form
+namespace Ajedrez_interactuable_con_form.Vistas
 {
     public class GloboComic
     {
