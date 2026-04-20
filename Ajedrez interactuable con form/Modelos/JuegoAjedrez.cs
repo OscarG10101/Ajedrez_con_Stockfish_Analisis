@@ -119,5 +119,13 @@ namespace Ajedrez_interactuable_con_form.Modelos
             if (EsHumano)
                 JugadaRealizada?.Invoke(jugada);
         }
+
+        public void ReiniciarTablero()
+        {
+            Tablero = new Pieza[8, 8];
+            Historial = new List<string>();
+            InicializarTablero();
+            TableroActualizado?.Invoke(); // notifica al Form1 que redibuje
+        }
     }
 }

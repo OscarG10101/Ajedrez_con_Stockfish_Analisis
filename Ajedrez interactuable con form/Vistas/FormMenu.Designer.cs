@@ -63,6 +63,7 @@
             BtnNatasha.TabIndex = 2;
             BtnNatasha.Text = "Natasha";
             BtnNatasha.UseVisualStyleBackColor = true;
+            BtnNatasha.Click += BtnNatasha_Click;
             // 
             // BtnAlejandra
             // 

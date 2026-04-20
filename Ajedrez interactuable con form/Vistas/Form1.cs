@@ -20,7 +20,7 @@ namespace Ajedrez_interactuable_con_form
 
         private int casillaSeleccionadaFila = -1; // -1 indica que no hay casilla seleccionada
         private int casillaSeleccionadaColumna = -1; // -1 indica que no hay casilla seleccionada
-        private int tamaño => panelTablero.Width / 8; // tamaño dinámico basado en el tamaño del panel
+        private int tamaño => PanelTablero.Width / 8; // tamaño dinámico basado en el tamaño del panel
         private List<string> movimientosPosibles = new List<string>();
 
         private GloboComic globo = new GloboComic();
@@ -30,6 +30,8 @@ namespace Ajedrez_interactuable_con_form
 
         public static Dictionary<(TipoPieza, bool), Image> imagenesPiezas;
         private TipoRival rival;
+        private int profundidadStockfish = 15;
+        private int _evaluacionActual = 0;
         private JuegoAjedrez juego;
 
         public Form1(TipoRival rivalSeleccionado) //constructor del formulario
@@ -41,14 +43,26 @@ namespace Ajedrez_interactuable_con_form
                 System.Reflection.BindingFlags.SetProperty |
                 System.Reflection.BindingFlags.Instance |
                 System.Reflection.BindingFlags.NonPublic,
-                null, panelTablero, new object[]
+                null, PanelTablero, new object[]
                 { true });
 
             this.Paint += Form1_Paint;
+            PanelEvaluacion.Paint += (s, e) => DibujarBarraEvaluacion(e.Graphics);
 
             rival = rivalSeleccionado;
+
+            switch (rival)
+            {
+                case TipoRival.Andrea:
+                    profundidadStockfish = 10;
+                    break;
+                case TipoRival.Natasha:
+                    profundidadStockfish = 5;
+                    break;
+            }
+
             juego = new JuegoAjedrez();
-            juego.TableroActualizado += () => panelTablero.Invalidate();
+            juego.TableroActualizado += () => PanelTablero.Invalidate();
             juego.JugadaRealizada += (jugada) => ProcesarJugada_Stockfish(jugada);
 
             timerGlobo.Tick += (s, e) =>
@@ -125,7 +139,7 @@ namespace Ajedrez_interactuable_con_form
         }
         private void CrearTableroBitmap()
         {
-            tableroBitmap = new Bitmap(panelTablero.Width, panelTablero.Height);
+            tableroBitmap = new Bitmap(PanelTablero.Width, PanelTablero.Height);
 
             using (Graphics g = Graphics.FromImage(tableroBitmap))
             {
@@ -140,6 +154,52 @@ namespace Ajedrez_interactuable_con_form
                 }
             }
         }
+
+        private void DibujarBarraEvaluacion(Graphics g)
+        {
+            int alto = PanelEvaluacion.Height;
+            int ancho = PanelEvaluacion.Width;
+
+            int eval = Math.Max(-10000, Math.Min(10000, _evaluacionActual)); // Limitar entre -10000 y 10000
+
+            float porcentajeBlancas = (eval + 10000f) / 20000f; // Convertir a porcentaje (0 a 1)
+            int alturaBlancas = (int)(alto * porcentajeBlancas);
+            int alturaNegras = alto - alturaBlancas;
+
+            g.FillRectangle(Brushes.Black, 0, 0, ancho, alturaNegras); // Parte negra
+
+            g.FillRectangle(Brushes.White, 0, alturaNegras, ancho, alturaBlancas); // Parte blanca
+
+            g.DrawLine(Pens.Gray, 0, alturaNegras, ancho, alturaNegras); // Línea divisoria
+        }
+        private void OnEvaluacionActualizada_Motor(int eval)
+        {
+            this.Invoke((MethodInvoker)delegate
+            {
+                // Si el historial tiene número impar de jugadas, Stockfish evaluó
+                // desde la perspectiva de negras y se invierte signo
+                bool turnoNegras = juego.Historial.Count % 2 != 0;
+                int evalDesdeBlancas = turnoNegras ? -eval : eval;
+
+                _evaluacionActual = evalDesdeBlancas;
+
+                string texto = evalDesdeBlancas >= 0
+                    ? $"+{evalDesdeBlancas / 100.0:F1}"
+                    : $"{evalDesdeBlancas / 100.0:F1}";
+                LblEvaluacionNumero.Text = texto;
+
+                PanelEvaluacion.Invalidate();
+
+                string comentario;
+                if (evalDesdeBlancas > 50) comentario = "¡Vas a perder!";
+                else if (evalDesdeBlancas < -50) comentario = "¡Bien hecho!";
+                else comentario = "Esto está parejo...";
+
+                comentarioActual = comentario;
+                this.Invalidate();
+            });
+        }
+
         private void PanelTablero_Paint(object sender, PaintEventArgs e)
         {
             if (tableroBitmap == null) CrearTableroBitmap();
@@ -204,7 +264,7 @@ namespace Ajedrez_interactuable_con_form
                 string jugada = $"{CasillaToTexto(casillaSeleccionadaFila, casillaSeleccionadaColumna)}" +
                                 $"{CasillaToTexto(fila, col)}";
 
-                if(movimientosPosibles.Contains(jugada))
+                if (movimientosPosibles.Contains(jugada))
                 {
                     // Obtener la pieza a mover
                     var pieza = juego.Tablero[casillaSeleccionadaFila, casillaSeleccionadaColumna];
@@ -228,7 +288,7 @@ namespace Ajedrez_interactuable_con_form
                 casillaSeleccionadaColumna = -1;
                 movimientosPosibles.Clear();
             }
-            panelTablero.Invalidate();
+            PanelTablero.Invalidate();
             // Redibujar el tablero para mostrar selección
         }
         private string CasillaToTexto(int fila, int col)
@@ -254,9 +314,8 @@ namespace Ajedrez_interactuable_con_form
                 historialJugadas.Add(jugadaUsuario);
                 LbxHistorial.Items.Add("Blancas: " + jugadaUsuario);
             });
-            
-            int profundidad = rival == TipoRival.Andrea ? 10 : 15;
-            motor.PedirBestMove(historialJugadas, profundidad);
+
+            motor.PedirBestMove(historialJugadas, profundidadStockfish);
         }
 
         private void MostrarMenuCoronacion(int filaDestino, int colDestino, Pieza peon, Action<char> onElegir)
@@ -266,32 +325,32 @@ namespace Ajedrez_interactuable_con_form
             menu.Items.Add("Dama", Properties.Resources.DamaBlanca, (s, e) =>
             {
                 peon.Tipo = TipoPieza.Dama;
-                panelTablero.Invalidate();
+                PanelTablero.Invalidate();
                 onElegir?.Invoke('q');
             });
             menu.Items.Add("Torre", Properties.Resources.TorreBlanca, (s, e) =>
             {
                 peon.Tipo = TipoPieza.Torre;
-                panelTablero.Invalidate();
+                PanelTablero.Invalidate();
                 onElegir?.Invoke('r');
             });
             menu.Items.Add("Alfil", Properties.Resources.AlfilBlanco, (s, e) =>
             {
                 peon.Tipo = TipoPieza.Alfil;
-                panelTablero.Invalidate();
+                PanelTablero.Invalidate();
                 onElegir?.Invoke('b');
             });
             menu.Items.Add("Caballo", Properties.Resources.CaballoBlanco, (s, e) =>
             {
                 peon.Tipo = TipoPieza.Caballo;
-                panelTablero.Invalidate();
+                PanelTablero.Invalidate();
                 onElegir?.Invoke('n');
             });
 
-            int size = panelTablero.Width / 8;
+            int size = PanelTablero.Width / 8;
             int x = colDestino * size;
             int y = filaDestino * size;
-            menu.Show(panelTablero, new Point(x, y));
+            menu.Show(PanelTablero, new Point(x, y));
         }
         private async Task AnimarMovimiento(Pieza pieza, int filaDestino, int colDestino)
         {
@@ -308,7 +367,7 @@ namespace Ajedrez_interactuable_con_form
                 pieza.PosX += Math.Sign(destinoX - pieza.PosX) * paso;
                 pieza.PosY += Math.Sign(destinoY - pieza.PosY) * paso;
 
-                panelTablero.Invalidate();
+                PanelTablero.Invalidate();
                 await Task.Delay(15); // espera breve para animación
             }
 
@@ -322,7 +381,7 @@ namespace Ajedrez_interactuable_con_form
             {
                 Rectangle areaGlobo = new Rectangle(
                     PbxRival.Left - 20,  // Ajustes manuales
-                    PbxRival.Top - 120,  
+                    PbxRival.Top - 120,
                     PbxRival.Width + 40,
                     100
                 );
@@ -330,39 +389,34 @@ namespace Ajedrez_interactuable_con_form
                 globo.Dibujar(e.Graphics, areaGlobo, comentarioActual);
             }
         }
-        private void OnEvaluacionActualizada_Motor(int eval)
+
+        private void LblUndo_Click(object sender, EventArgs e)
         {
-            // quedó pendiente cambiar la imagen del globo y el texto según la evaluación
-            this.Invoke((MethodInvoker)delegate
+            var historial = juego.Historial;
+
+            if (historial.Count < 2) return;
+
+            historial.RemoveAt(historial.Count - 1); // Quitar jugada Stockfish
+            historial.RemoveAt(historial.Count - 1); // Quitar jugada usuario
+
+
+            juego.ReiniciarTablero();
+
+            foreach (string jugada in historial.ToList())
+                juego.MoverPieza(jugada, false);
+
+            LbxHistorial.Items.Clear();
+            for (int i = 0; i < historial.Count; i++)
             {
-                string comentario;
-                Image nuevaImagen;
+                string prefijo = (i % 2 == 0) ? "Blancas: " : "Negras: ";
+                LbxHistorial.Items.Add(prefijo + historial[i]);
+            }
 
-                if (eval == 10000)
-                {
-                    comentario = "¡Me ganaste!";
-                    //nuevaImagen = Properties.Resources.AndreaPierde;
-                }
-                else if (eval > 50) // ventaja IA
-                {
-                    comentario = "¡Vas a perder!";
-                    //nuevaImagen = Properties.Resources.AndreaBuenaJugadaCallando;
-                }
-                else if (eval < -50) // ventaja jugador
-                {
-                    comentario = "¡Bien hecho!";
-                    //nuevaImagen = Properties.Resources.AndreaMenu;
-                }
-                else
-                {
-                    comentario = "Esto está parejo...";
-                    //nuevaImagen = Properties.Resources.AndreaMenu;
-                }
-
-                comentarioActual = comentario; // Actualizar comentario y imagen
-                //PbxRival.Image = nuevaImagen; 
-                this.Invalidate(); // repinta el Form para mostrar el globo con el nuevo comentario
-            });
+            movimientosPosibles.Clear();
+            casillaSeleccionadaColumna = -1;
+            casillaSeleccionadaFila = -1;
+            LblRespuesta.Text = "Jugada deshecha.";
+            PanelTablero.Invalidate();
         }
     }
 }

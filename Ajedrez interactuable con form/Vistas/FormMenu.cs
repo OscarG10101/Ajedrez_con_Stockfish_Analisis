@@ -24,13 +24,19 @@ namespace Ajedrez_interactuable_con_form
         {
             Humano,
             Andrea,
-            Natasha, 
+            Natasha,
             Alejandra
         }
 
         private void BtnAndrea_Click(object sender, EventArgs e)
         {
             RivalSeleccionado = TipoRival.Andrea;
+            this.DialogResult = DialogResult.OK;
+        }
+
+        private void BtnNatasha_Click(object sender, EventArgs e)
+        {
+            RivalSeleccionado = TipoRival.Natasha;
             this.DialogResult = DialogResult.OK;
         }
     }
