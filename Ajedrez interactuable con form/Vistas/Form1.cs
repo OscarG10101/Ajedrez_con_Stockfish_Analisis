@@ -23,16 +23,14 @@ namespace Ajedrez_interactuable_con_form
         private int tamaño => PanelTablero.Width / 8; // tamaño dinámico basado en el tamaño del panel
         private List<string> movimientosPosibles = new List<string>();
 
-        private GloboComic globo = new GloboComic();
+        private GloboComic globoTexto = new GloboComic();
         private string comentarioActual = "";
         private int contadorJugadasUsuario = 0;
         private System.Windows.Forms.Timer timerGlobo = new System.Windows.Forms.Timer { Interval = 3000 };
 
         public static Dictionary<(TipoPieza, bool), Image> imagenesPiezas;
-        private TipoRival rival;
-        private int profundidadStockfish = 15;
         private int _evaluacionActual = 0;
-        private JuegoAjedrez juego;
+        private TableroAjedrez juego;
 
         public Form1(TipoRival rivalSeleccionado) //constructor del formulario
         {
@@ -49,19 +47,9 @@ namespace Ajedrez_interactuable_con_form
             this.Paint += Form1_Paint;
             PanelEvaluacion.Paint += (s, e) => DibujarBarraEvaluacion(e.Graphics);
 
-            rival = rivalSeleccionado;
+            int rivalElo = (int)rivalSeleccionado;
 
-            switch (rival)
-            {
-                case TipoRival.Andrea:
-                    profundidadStockfish = 10;
-                    break;
-                case TipoRival.Natasha:
-                    profundidadStockfish = 5;
-                    break;
-            }
-
-            juego = new JuegoAjedrez();
+            juego = new TableroAjedrez();
             juego.TableroActualizado += () => PanelTablero.Invalidate();
             juego.JugadaRealizada += (jugada) => ProcesarJugada_Stockfish(jugada);
 
@@ -76,10 +64,11 @@ namespace Ajedrez_interactuable_con_form
             {
                 MostrarMenuCoronacion(fila, col, peon, callback);
             };
-
+            MessageBox.Show($"Has elegido jugar contra {rivalSeleccionado} (Elo {rivalElo}). ¡Buena suerte!");
             motor = new StockfishMotor();
             motor.BestMove_Encontrado += OnBestMove_Motor; // Eventos se suscriben a métodos
             motor.Evaluacion_Actualizada += OnEvaluacionActualizada_Motor;
+            motor.SinJugadasLegales += OnSinJugada_Motor;
 
             // Leer README
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -95,7 +84,7 @@ namespace Ajedrez_interactuable_con_form
 
             string exe = files[0];
             motor.Iniciar(exe);
-
+            motor.ConfigurarNivel((int)rivalElo);
 
 
             CargarImagenesPiezas();
@@ -196,6 +185,7 @@ namespace Ajedrez_interactuable_con_form
                 else comentario = "Esto está parejo...";
 
                 comentarioActual = comentario;
+                timerGlobo.Start();
                 this.Invalidate();
             });
         }
@@ -252,6 +242,13 @@ namespace Ajedrez_interactuable_con_form
                 // casilla de origen seleccionada
                 casillaSeleccionadaFila = fila;
                 casillaSeleccionadaColumna = col;
+
+                var todasLasJugadas = await motor.PedirJugadasLegalesAsync(historialJugadas);
+                if (todasLasJugadas.Count == 0)
+                {
+                    OnSinJugada_Motor();
+                    return;
+                }
 
                 string casillaOrigen = CasillaToTexto(fila, col);
                 movimientosPosibles = (await motor.PedirJugadasLegalesAsync(historialJugadas))
@@ -315,7 +312,7 @@ namespace Ajedrez_interactuable_con_form
                 LbxHistorial.Items.Add("Blancas: " + jugadaUsuario);
             });
 
-            motor.PedirBestMove(historialJugadas, profundidadStockfish);
+            motor.PedirBestMove(historialJugadas);
         }
 
         private void MostrarMenuCoronacion(int filaDestino, int colDestino, Pieza peon, Action<char> onElegir)
@@ -386,25 +383,18 @@ namespace Ajedrez_interactuable_con_form
                     100
                 );
 
-                globo.Dibujar(e.Graphics, areaGlobo, comentarioActual);
+                globoTexto.Dibujar(e.Graphics, areaGlobo, comentarioActual);
             }
         }
 
         private void LblUndo_Click(object sender, EventArgs e)
         {
+            if (juego.Historial.Count < 2) return;
+
+            juego.DeshacerJugadas();
             var historial = juego.Historial;
 
-            if (historial.Count < 2) return;
-
-            historial.RemoveAt(historial.Count - 1); // Quitar jugada Stockfish
-            historial.RemoveAt(historial.Count - 1); // Quitar jugada usuario
-
-
-            juego.ReiniciarTablero();
-
-            foreach (string jugada in historial.ToList())
-                juego.MoverPieza(jugada, false);
-
+            // Actualizar historial label
             LbxHistorial.Items.Clear();
             for (int i = 0; i < historial.Count; i++)
             {
@@ -417,6 +407,46 @@ namespace Ajedrez_interactuable_con_form
             casillaSeleccionadaFila = -1;
             LblRespuesta.Text = "Jugada deshecha.";
             PanelTablero.Invalidate();
+        }
+
+        private void OnSinJugada_Motor()
+        {
+            this.Invoke((MethodInvoker)delegate
+            {
+                ResultadoPartida resultado;
+
+                if (motor.UltimaEvaluacionFueMate)
+                {
+                    bool turnoBlancas = juego.Historial.Count % 2 == 0; // si blancas no puede mover ganan negras
+                    resultado = turnoBlancas ?
+                    ResultadoPartida.GanaNegras
+                    : ResultadoPartida.GanaBlancas;
+                }
+                else if (juego.EsTripleRepeticion())
+                    resultado = ResultadoPartida.TripleRepeticion;
+                else if (juego.EsCincuentaMovimientos())
+                    resultado = ResultadoPartida.CincuentaMovimientos;
+                else
+                    resultado = ResultadoPartida.Ahogado;
+
+                MostrarFinPartida(resultado);
+            });
+        }
+
+        private void MostrarFinPartida(ResultadoPartida resultado)
+        {
+            string mensaje = resultado switch
+            {
+                ResultadoPartida.GanaBlancas => "¡Jaque mate! Ganaste.",
+                ResultadoPartida.GanaNegras => "¡Jaque mate! Perdiste.",
+                ResultadoPartida.Ahogado => "¡Ahogado! Tablas.",
+                ResultadoPartida.TripleRepeticion => "Triple repetición. Tablas.",
+                ResultadoPartida.CincuentaMovimientos => "Regla de 50 movimientos. Tablas.",
+                _ => "Partida terminada."
+            };
+
+            MessageBox.Show(mensaje);
+            // Aquí después agregaré: guardar en DB y mostrar botón de volver al menú
         }
     }
 }

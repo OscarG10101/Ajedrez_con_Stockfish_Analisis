@@ -23,9 +23,9 @@ namespace Ajedrez_interactuable_con_form
         public enum TipoRival
         {
             Humano,
-            Andrea,
-            Natasha,
-            Alejandra
+            Andrea = 1320,
+            Natasha = 1400,
+            Alejandra = 1500
         }
 
         private void BtnAndrea_Click(object sender, EventArgs e)

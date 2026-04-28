@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Ajedrez_interactuable_con_form.Modelos
 {
-    internal class JuegoAjedrez
+    internal class TableroAjedrez
     {
         public Pieza[,] Tablero { get; private set; } = new Pieza[8, 8];
         public List<string> Historial { get; private set; } = new List<string>();
@@ -20,7 +20,7 @@ namespace Ajedrez_interactuable_con_form.Modelos
         public Action<int, int, Pieza, Action<char>> MostrarMenuCoronacionUI;
 
 
-        public JuegoAjedrez()
+        public TableroAjedrez()
         {
             InicializarTablero();
         }
@@ -47,9 +47,9 @@ namespace Ajedrez_interactuable_con_form.Modelos
                 Tablero[fila, col] = new Pieza(fila, col, esBlanco, piezas[col]);
         }
 
-        public void MoverPieza(string jugada, bool EsHumano, Action<char> coronacionCallback = null)
+        public void MoverPieza(string jugada, bool EsHumano, Action<char>? coronacionCallback = null)
         {
-            if (jugada.Length < 4) return;
+            if (jugada.Length < 4 || Tablero == null) return;
 
             // Origen
             int colOrigen = jugada[0] - 'a';
@@ -120,12 +120,71 @@ namespace Ajedrez_interactuable_con_form.Modelos
                 JugadaRealizada?.Invoke(jugada);
         }
 
-        public void ReiniciarTablero()
+        public bool EsTripleRepeticion()
         {
+            var posiciones = new Dictionary<string, int>();
+
+            var tableroTemp = new TableroAjedrez();
+            string posicionInicial = tableroTemp.ObtenerFEN();
+            posiciones[posicionInicial] = 1;
+
+            foreach (string jugada in Historial)
+            {
+                tableroTemp.MoverPieza(jugada, false);
+                string fen = tableroTemp.ObtenerFEN();
+                if (posiciones.ContainsKey(fen))
+                    posiciones[fen]++;
+                else
+                    posiciones[fen] = 1;
+                if (posiciones[fen] >= 3)
+                    return true;
+            }
+            return false;
+        }
+
+        public bool EsCincuentaMovimientos()
+        {
+            int contador = 0;
+            foreach (string jugada in Historial.AsEnumerable().Reverse())
+            {
+                contador++;
+                if (contador >= 100) return true; // 50 movimientos por jugador = 100 jugadas
+            }
+            return false;
+        }
+
+        private string ObtenerFEN()
+        {
+            var sb = new StringBuilder();
+            for (int fila = 0; fila < 8; fila++)
+            {
+                for (int col = 0; col < 8; col++)
+                {
+                    var pieza = Tablero[fila, col];
+                    if (pieza == null) sb.Append('.');
+                    else sb.Append($"{pieza.Tipo}{pieza.EsBlanca}");
+                }
+            }
+            return sb.ToString();
+        }
+
+        public void DeshacerJugadas()
+        {
+            if (Historial.Count < 2) return;
+
+            var ultimasJugadas = Historial.SkipLast(2).ToList();
+
             Tablero = new Pieza[8, 8];
             Historial = new List<string>();
-            InicializarTablero();
-            TableroActualizado?.Invoke(); // notifica al Form1 que redibuje
+            InicializarTablero(); // Volver a colocar las piezas
+
+            foreach (string jugada in ultimasJugadas)
+            {
+                Historial.Add(jugada);
+                MoverPieza(jugada, false);
+            }
+
+            TableroActualizado?.Invoke();
         }
     }
 }
