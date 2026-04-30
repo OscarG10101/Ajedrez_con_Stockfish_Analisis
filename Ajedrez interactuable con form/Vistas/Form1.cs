@@ -62,7 +62,14 @@ namespace Ajedrez_interactuable_con_form
 
             juego.MostrarMenuCoronacionUI = (fila, col, peon, callback) =>
             {
-                MostrarMenuCoronacion(fila, col, peon, callback);
+                if (this.InvokeRequired)
+                {
+                    this.Invoke((MethodInvoker)(() => MostrarMenuCoronacion(fila, col, peon, callback)));
+                }
+                else
+                {
+                    MostrarMenuCoronacion(fila, col, peon, callback);
+                }
             };
             MessageBox.Show($"Has elegido jugar contra {rivalSeleccionado} (Elo {rivalElo}). ¡Buena suerte!");
             motor = new StockfishMotor();
@@ -251,7 +258,7 @@ namespace Ajedrez_interactuable_con_form
                 }
 
                 string casillaOrigen = CasillaToTexto(fila, col);
-                movimientosPosibles = (await motor.PedirJugadasLegalesAsync(historialJugadas))
+                movimientosPosibles = (todasLasJugadas)
                                       .Where(j => j.StartsWith(casillaOrigen))
                                       .ToList();
             }
@@ -259,26 +266,32 @@ namespace Ajedrez_interactuable_con_form
             {
                 // coordenadas completas "e2e4"
                 string jugada = $"{CasillaToTexto(casillaSeleccionadaFila, casillaSeleccionadaColumna)}" +
-                                $"{CasillaToTexto(fila, col)}";
+                $"{CasillaToTexto(fila, col)}";
 
-                if (movimientosPosibles.Contains(jugada))
+                // Buscar si hay jugadas que empiecen con esas 4 coordenadas
+                var jugadasDestino = movimientosPosibles.Where(j => j.StartsWith(jugada)).ToList();
+
+                if (jugadasDestino.Count > 0)
                 {
-                    // Obtener la pieza a mover
                     var pieza = juego.Tablero[casillaSeleccionadaFila, casillaSeleccionadaColumna];
-
-                    // Animar movimiento antes de actualizar el tablero
                     await AnimarMovimiento(pieza, fila, col);
 
-                    // Actualizar el tablero
-                    juego.MoverPieza(jugada, true);
+                    if (jugadasDestino.Count > 1 || jugadasDestino[0].Length == 5)
+                    {
+                        // Es coronación, MoverPieza mostrará el menú
+                        juego.MoverPieza(jugada, true); 
+                    }
+                    else
+                    {
+                        juego.MoverPieza(jugadasDestino[0], true); // movimiento normal
+                    }
 
                     contadorJugadasUsuario++;
                     if (contadorJugadasUsuario % 3 == 0)
                     {
                         this.Invalidate();
-                        timerGlobo.Start(); // el timer ocultará el globo después de 3s
+                        timerGlobo.Start();
                     }
-
                 }
 
                 casillaSeleccionadaFila = -1; // Resetear selecciones
