@@ -1,6 +1,6 @@
 ﻿namespace Ajedrez_interactuable_con_form
 {
-    partial class Form1
+    partial class FormPartida
     {
         /// <summary>
         ///  Required designer variable.
@@ -101,7 +101,7 @@
             LblUndo.Text = "Deshacer Jugada";
             LblUndo.Click += LblUndo_Click;
             // 
-            // Form1
+            // FormPartida
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -113,8 +113,10 @@
             Controls.Add(PanelTablero);
             Controls.Add(LblRespuesta);
             Controls.Add(LbxHistorial);
-            Name = "Form1";
+            Name = "FormPartida";
             Text = "Form1";
+            FormClosing += FormPartida_FormClosing;
+            Paint += FormPartida_Paint;
             ((System.ComponentModel.ISupportInitialize)PbxRival).EndInit();
             ResumeLayout(false);
             PerformLayout();

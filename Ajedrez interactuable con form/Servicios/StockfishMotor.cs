@@ -5,7 +5,7 @@ using System.IO;
 
 namespace Ajedrez_interactuable_con_form.Servicios
 {
-    internal class StockfishMotor
+    public class StockfishMotor
     {
         private enum EstadoEspera
         {
@@ -17,19 +17,19 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private EstadoEspera _estadoActual = EstadoEspera.Ninguno;
 
-        private Process stockfish;
-        private StreamWriter input;
+        private Process stockfish = null!;
+        private StreamWriter? input = null;
 
-        private TaskCompletionSource<List<string>> tcsJugadasLegales;
+        private TaskCompletionSource<List<string>>? tcsJugadasLegales;
         private List<string> _jugadasTemp = new List<string>(); // se usa para acumular jugadas legales mientras se espera la respuesta completa
         private bool _ultimaEvaluacionFueMate = false;
-        public bool UltimaEvaluacionFueMate => _ultimaEvaluacionFueMate; // propiedad pública para que otras clases puedan consultar si la última evaluación fue un mate
+        public bool UltimaEvaluacionFueMate => _ultimaEvaluacionFueMate; // otras clases puedan consultar si la última evaluación fue un mate
 
         // Evento para notificar jugadas
-        public event Action<string> BestMove_Encontrado;
-        public event Action<int> Evaluacion_Actualizada; // centipeones
-        public event Action<ResultadoPartida> PartidaFin;
-        public event Action SinJugadasLegales;
+        public event Action<string>? BestMove_Encontrado;
+        public event Action<int>? Evaluacion_Actualizada; // centipeones
+        public event Action<ResultadoPartida>? PartidaFin;
+        public event Action? SinJugadasLegales;
 
         public void Iniciar(string rutaExe)
         {
@@ -63,6 +63,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 }
             };
 
+            if (stockfish == null)
+                return;
+
             // iniciar proceso
             stockfish.Start();
             stockfish.BeginOutputReadLine();
@@ -75,12 +78,16 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         public void ConfigurarNivel(int elo)
         {
+            if (input == null) return;
+
             input.WriteLine("setoption name UCI_LimitStrength value true");
             input.WriteLine($"setoption name UCI_Elo value {elo}");
         }
 
         public async Task<List<string>> PedirJugadasLegalesAsync(List<string> historial)
         {
+            if (input == null) return new List<string>();
+
             _estadoActual = EstadoEspera.EsperandoJugadasLegales;
 
             // Preparo para recibir jugadas legales
@@ -94,9 +101,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
             return await tcsJugadasLegales.Task;
         }
 
-        private void ProcesarJugadasLegales(DataReceivedEventArgs e)
+        private void ProcesarJugadasLegales(DataReceivedEventArgs? e)
         {
-            if (tcsJugadasLegales != null)
+            if (tcsJugadasLegales != null && e != null && e.Data != null)
             {
                 if (e.Data.StartsWith("Nodes searched"))
                 {
@@ -118,6 +125,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         public void PedirBestMove(List<string> historial)
         {
+            if (input == null) return;
+
             _estadoActual = EstadoEspera.EsperandoBestMove;
 
             string movimientos = string.Join(" ", historial);
@@ -127,7 +136,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private void ProcesarBestMove(DataReceivedEventArgs e)
         {
-            if (e.Data.StartsWith("bestmove"))
+            if (e.Data != null && e.Data.StartsWith("bestmove"))
             {
                 string[] partes = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -148,8 +157,11 @@ namespace Ajedrez_interactuable_con_form.Servicios
             }
         }
 
-        private void ProcesarEvaluacion(DataReceivedEventArgs e)
+        private void ProcesarEvaluacion(DataReceivedEventArgs? e)
         {
+            if (e == null || e.Data == null)
+                return;
+
             if (e.Data.StartsWith("info") && e.Data.Contains("score"))
             {
                 string[] partes = e.Data.Split(' ', StringSplitOptions.RemoveEmptyEntries);
@@ -177,6 +189,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         public void IniciarAnalisisContinuo(List<string> historial)
         {
+            if (input == null) return;
+
             _estadoActual = EstadoEspera.EsperandoEvaluacion;
 
             string movimientos = string.Join(" ", historial);
@@ -186,7 +200,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         public void DetenerAnalisis()
         {
-            input.WriteLine("stop");
+            input?.WriteLine("stop");
             _estadoActual = EstadoEspera.Ninguno;
         }
 
@@ -197,11 +211,29 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         public void Cerrar()
         {
-            if (stockfish != null && !stockfish.HasExited)
+            if (stockfish != null && input != null)
             {
-                input.WriteLine("quit");
-                stockfish.Close();
-                stockfish.Dispose();
+                try
+                {
+                    if (!stockfish.HasExited)
+                    {
+                        input.WriteLine("quit");
+
+                        if (!stockfish.WaitForExit(1000))
+                        {
+                            stockfish.Kill();
+                        }
+                    }
+                }
+                catch (Exception) { } // luego agregar log de error
+
+                finally
+                {
+                    stockfish.Dispose();
+                    stockfish = null!;
+                    input = null;
+                }
+                
             }
         }
     }

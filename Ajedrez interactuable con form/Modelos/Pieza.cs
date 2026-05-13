@@ -21,7 +21,7 @@ namespace Ajedrez_interactuable_con_form.Modelos
     public class Pieza
     {
         // Diccionario para mapear tipos de piezas y colores a imágenes
-        public static Dictionary<(TipoPieza, bool), Image> ImagenesPiezas;
+        public static Dictionary<(TipoPieza, bool), Image>? ImagenesPiezas;
 
         // Propiedades: fila, columna y color
         public int Fila { get; set; }
@@ -56,7 +56,7 @@ namespace Ajedrez_interactuable_con_form.Modelos
             RectangleF rect = new RectangleF(x, y, tamaño, tamaño);
 
             // Buscar la imagen correcta del diccionario estático
-            Image img = Form1.imagenesPiezas[(Tipo, EsBlanca)];
+            Image img = ImagenesPiezas![(Tipo, EsBlanca)];
 
             g.DrawImage(img, rect);
 

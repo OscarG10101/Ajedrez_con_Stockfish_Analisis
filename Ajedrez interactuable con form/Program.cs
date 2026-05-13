@@ -1,3 +1,5 @@
+using Ajedrez_interactuable_con_form.Servicios;
+
 namespace Ajedrez_interactuable_con_form
 {
     internal static class Program
@@ -10,15 +12,10 @@ namespace Ajedrez_interactuable_con_form
         {
             ApplicationConfiguration.Initialize();
 
-            // Crear y mostrar el formulario de menú
-            using (FormMenu menu = new FormMenu())
-            {
-                if (menu.ShowDialog() == DialogResult.OK)
-                {
-                    // Abrir el formulario principal con la opción seleccionada
-                    Application.Run(new Form1(menu.RivalSeleccionado));
-                }
-            }
+            var formMenu = new FormMenu();
+            var presentadorMenu = new PresentadorMenu(formMenu); // Conecta eventos
+
+            Application.Run(formMenu);
         }
     }
 }

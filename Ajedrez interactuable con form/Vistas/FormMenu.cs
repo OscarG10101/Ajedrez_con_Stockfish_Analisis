@@ -7,37 +7,41 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Ajedrez_interactuable_con_form.Modelos;
+using Ajedrez_interactuable_con_form.Vistas;
 
 namespace Ajedrez_interactuable_con_form
 {
-    public partial class FormMenu : Form
+    public partial class FormMenu : Form, IVistaMenu
     {
-        public TipoRival RivalSeleccionado { get; private set; }
+        public event Action<TipoRival>? RivalSeleccionado;
 
         public FormMenu()
         {
             InitializeComponent();
-
             PbxAndrea.Image = Properties.Resources.Andrea;
+            PbxNatasha.Image = Properties.Resources.Natasha;
+            PbxAlejandra.Image = Properties.Resources.Alejandra;
         }
-        public enum TipoRival
+
+        public void CerrarMenu()
         {
-            Humano,
-            Andrea = 1320,
-            Natasha = 1400,
-            Alejandra = 1500
+            this.Hide();
         }
 
         private void BtnAndrea_Click(object sender, EventArgs e)
         {
-            RivalSeleccionado = TipoRival.Andrea;
-            this.DialogResult = DialogResult.OK;
+            RivalSeleccionado?.Invoke(TipoRival.Andrea);
         }
 
         private void BtnNatasha_Click(object sender, EventArgs e)
         {
-            RivalSeleccionado = TipoRival.Natasha;
-            this.DialogResult = DialogResult.OK;
+            RivalSeleccionado?.Invoke(TipoRival.Natasha);
+        }
+
+        private void BtnAlejandra_Click(object sender, EventArgs e)
+        {
+            RivalSeleccionado?.Invoke(TipoRival.Alejandra);
         }
     }
 }

@@ -6,19 +6,19 @@ using System.Threading.Tasks;
 
 namespace Ajedrez_interactuable_con_form.Modelos
 {
-    internal class TableroAjedrez
+    public class TableroAjedrez
     {
-        public Pieza[,] Tablero { get; private set; } = new Pieza[8, 8];
+        public Pieza?[,] Tablero { get; private set; } = new Pieza?[8, 8];
         public List<string> Historial { get; private set; } = new List<string>();
 
         // Evento que notifica que se movió una pieza
-        public event Action<string> JugadaRealizada;
+        public event Action<string>? JugadaRealizada;
 
         // Evento para pedir redibujar el tablero
-        public event Action TableroActualizado;
+        public event Action? TableroActualizado;
 
-        public Action<int, int, Pieza, Action<char>> MostrarMenuCoronacionUI;
-
+        public Action<int, int, Pieza, Action<char>>? MostrarMenuCoronacionUI;
+        public Pieza? ObtenerPieza(int fila, int columna) => Tablero[fila, columna];
 
         public TableroAjedrez()
         {
@@ -47,6 +47,17 @@ namespace Ajedrez_interactuable_con_form.Modelos
                 Tablero[fila, col] = new Pieza(fila, col, esBlanco, piezas[col]);
         }
 
+        public void RegistrarJugada(string jugada, bool esHumano)
+        {
+            Historial.Add(jugada);
+            RealizarJugada(jugada, esHumano);
+        }
+
+        public void RealizarJugada(string jugada, bool esHumano)
+        {
+            MoverPieza(jugada, esHumano);
+        }
+
         public void MoverPieza(string jugada, bool EsHumano, Action<char>? coronacionCallback = null)
         {
             if (jugada.Length < 4 || Tablero == null) return;
@@ -71,7 +82,7 @@ namespace Ajedrez_interactuable_con_form.Modelos
                     var torre = Tablero[filaOrigen, 7];
                     Tablero[filaDestino, 5] = torre;
                     Tablero[filaOrigen, 7] = null;
-                    torre.Columna = 5;
+                    torre!.Columna = 5;
                 }
                 // Enroque largo
                 else
@@ -79,7 +90,7 @@ namespace Ajedrez_interactuable_con_form.Modelos
                     var torre = Tablero[filaOrigen, 0];
                     Tablero[filaDestino, 3] = torre;
                     Tablero[filaOrigen, 0] = null;
-                    torre.Columna = 3;
+                    torre!.Columna = 3;
                 }
             }
 
@@ -93,7 +104,7 @@ namespace Ajedrez_interactuable_con_form.Modelos
             {
                 if (EsHumano)
                 {
-                    MostrarMenuCoronacionUI(filaDestino, colDestino, pieza, (piezaElegida) =>
+                    MostrarMenuCoronacionUI?.Invoke(filaDestino, colDestino, pieza, (piezaElegida) =>
                     {
                         string jugadaConCoronacion = jugada + piezaElegida;
                         JugadaRealizada?.Invoke(jugadaConCoronacion); 

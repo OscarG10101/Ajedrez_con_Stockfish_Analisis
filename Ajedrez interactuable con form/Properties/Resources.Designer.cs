@@ -63,6 +63,16 @@ namespace Ajedrez_interactuable_con_form.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Alejandra {
+            get {
+                object obj = ResourceManager.GetObject("Alejandra", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap AlfilBlanco {
             get {
                 object obj = ResourceManager.GetObject("AlfilBlanco", resourceCulture);
@@ -126,6 +136,16 @@ namespace Ajedrez_interactuable_con_form.Properties {
         internal static System.Drawing.Bitmap DamaNegra {
             get {
                 object obj = ResourceManager.GetObject("DamaNegra", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Natasha {
+            get {
+                object obj = ResourceManager.GetObject("Natasha", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
