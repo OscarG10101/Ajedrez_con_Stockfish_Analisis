@@ -13,24 +13,29 @@ namespace Ajedrez_interactuable_con_form.Servicios
         private readonly IVistaPartida _vista;
         private readonly TableroAjedrez _juego;
         private readonly StockfishMotor _motor;
+        private readonly StockfishAnalista _analista;
 
         private List<string> _movimientosPosibles = new List<string>();
         private bool _turnoUsuario = true;
+        private bool _partidaTerminada = true;
 
         public PresentadorPartida(IVistaPartida vista, TableroAjedrez juego, 
-            StockfishMotor motor, TipoRival rival)
+            StockfishMotor motor, StockfishAnalista analista, TipoRival rival)
         {
             _vista = vista;
             _juego = juego;
             _motor = motor;
+            _analista = analista;
 
             _vista.CasillaSeleccionada += OnCasillaSeleccionada;
             _vista.UndoSolicitado += OnUndoSolicitado;
-            _vista.VistaCerrada += () => _motor.Cerrar();
+            _vista.VistaCerrada += () => { _motor.Cerrar(); _analista.Cerrar(); };
 
             _motor.BestMove_Encontrado += OnBestMoveEncontrado;
-            _motor.Evaluacion_Actualizada += OnEvaluacionActualizada;
             _motor.SinJugadasLegales += OnSinJugadasLegales;
+
+            _analista.Evaluacion_Actualizada += OnEvaluacionActualizada;
+            _analista.MateDetectado += OnSinJugadasLegales;
 
             _juego.TableroActualizado += () => _vista.ActualizarTablero();
             _vista.SincronizarTablero(_juego.Tablero);
@@ -53,6 +58,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
             _motor.Iniciar(files[0]);
             _motor.ConfigurarNivel((int)rival);
+            _analista.Iniciar(files[0]);
         }
 
         private async void OnCasillaSeleccionada(int fila, int columna)
@@ -60,7 +66,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
             if (!_turnoUsuario)
                 return;
 
-            if (_movimientosPosibles.Count == 0)
+            if (_movimientosPosibles.Count == 0) // primer clic
             {
                 var legales = await _motor.PedirJugadasLegalesAsync(_juego.Historial);
 
@@ -81,7 +87,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
             var destinos = _movimientosPosibles.Where(j => j.StartsWith(jugada)).ToList();
 
-            if (destinos.Count > 0)
+            if (destinos.Count > 0) // segundo clic con lista mov posibles
             {
                 _turnoUsuario = false;
 
@@ -93,7 +99,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 string jugadaFinal = (destinos.Count > 1 || destinos[0].Length == 5)
                     ? jugada : destinos[0];
 
-                _juego.RegistrarJugada(jugadaFinal, true);
+                JuegaUsuario(jugadaFinal);
+                _analista.Analizarposicion(_juego.Historial);
 
                 _vista.AgregarJugadaHistorial("Blancas", jugadaFinal);
                 _vista.MostrarMensajeEstado($"Tu jugada: {jugadaFinal}");
@@ -105,35 +112,28 @@ namespace Ajedrez_interactuable_con_form.Servicios
             _vista.LimpiarSeleccion();
         }
 
-        private void OnUndoSolicitado()
+        private void JuegaUsuario(string jugada)
         {
-            if (_juego.Historial.Count < 2)
-                return;
-
-            _juego.DeshacerJugadas();
-            _turnoUsuario = true;
-
-            _vista.LimpiarHistorial();
-
-            for (int i = 0; i < _juego.Historial.Count; i++)
-            {
-                string turno = i % 2 == 0 ? "Blancas" : "Negras";
-                _vista.AgregarJugadaHistorial(turno, _juego.Historial[i]);
-            }
-
-            _movimientosPosibles.Clear();
-            _vista.LimpiarSeleccion();
-            _vista.MostrarMensajeEstado("Jugada deshecha. Es tu turno.");
-            _vista.ActualizarTablero();
-            _vista.SincronizarTablero(_juego.Tablero);
+            _juego.RegistrarJugada(jugada, true);
         }
-        private void OnBestMoveEncontrado(string bestMove) // maquina juega
+
+        private void JuegaStockfish(string bestMove)
         {
             _juego.RegistrarJugada(bestMove, false);
+        }
+
+        private async void OnBestMoveEncontrado(string bestMove) // maquina juega
+        {
+            JuegaStockfish(bestMove);
             _turnoUsuario = true;
+
+            _analista.Analizarposicion(_juego.Historial);
 
             _vista.MostrarJugadaStockfish(bestMove);
             _vista.AgregarJugadaHistorial("Negras", bestMove);
+
+            var legales = await _motor.PedirJugadasLegalesAsync(_juego.Historial);
+            if (legales.Count == 0) OnSinJugadasLegales();
         }
 
         private void OnEvaluacionActualizada(int eval)
@@ -145,11 +145,18 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private void OnSinJugadasLegales()
         {
+            if (_partidaTerminada) return;
+            _partidaTerminada = true;
+            File.AppendAllText("stockfish_log.txt",
+        $"[FinPartida] Historial.Count={_juego.Historial.Count} " +
+        $"UltimaEvaluacionFueMate={_analista.UltimaEvaluacionFueMate}\n");
+            _analista.DetenerAnalisis();
             ResultadoPartida resultado;
 
-            if (_motor.UltimaEvaluacionFueMate)
+            bool turnoBlancas = _juego.Historial.Count % 2 == 0;
+
+            if (_analista.UltimaEvaluacionFueMate)
             {
-                bool turnoBlancas = _juego.Historial.Count % 2 == 0;
                 resultado = turnoBlancas ? ResultadoPartida.GanaNegras : ResultadoPartida.GanaBlancas;
             }
             else if (_juego.EsTripleRepeticion())
@@ -167,6 +174,30 @@ namespace Ajedrez_interactuable_con_form.Servicios
             char letra = (char)('a' + col);
             int numero = 8 - fila;
             return $"{letra}{numero}";
+        }
+
+        private void OnUndoSolicitado()
+        {
+            if (_juego.Historial.Count < 2)
+                return;
+
+            _juego.DeshacerJugadas();
+            _turnoUsuario = true;
+            _partidaTerminada = false;
+
+            _vista.LimpiarHistorial();
+
+            for (int i = 0; i < _juego.Historial.Count; i++)
+            {
+                string turno = i % 2 == 0 ? "Blancas" : "Negras";
+                _vista.AgregarJugadaHistorial(turno, _juego.Historial[i]);
+            }
+
+            _movimientosPosibles.Clear();
+            _vista.LimpiarSeleccion();
+            _vista.MostrarMensajeEstado("Jugada deshecha. Es tu turno.");
+            _vista.ActualizarTablero();
+            _vista.SincronizarTablero(_juego.Tablero);
         }
     }
 }

@@ -26,6 +26,10 @@ namespace Ajedrez_interactuable_con_form
 
         public void CerrarMenu()
         {
+            PbxAndrea.Image = null;
+            PbxNatasha.Image = null;
+            PbxAlejandra.Image = null;
+
             this.Hide();
         }
 
@@ -42,6 +46,11 @@ namespace Ajedrez_interactuable_con_form
         private void BtnAlejandra_Click(object sender, EventArgs e)
         {
             RivalSeleccionado?.Invoke(TipoRival.Alejandra);
+        }
+
+        private void FormMenu_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Application.Exit();
         }
     }
 }

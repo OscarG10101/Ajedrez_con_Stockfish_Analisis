@@ -35,7 +35,7 @@ namespace Ajedrez_interactuable_con_form
 
         public Pieza?[,] ObtenerTablero() => _tablero;
         private Pieza?[,] _tablero = new Pieza?[8, 8];
-        private int tamaño => PanelTablero.Width / 8;
+        private int tamaño => PanelTablero.Width / 8; // tamaño de cada casilla
 
         public FormPartida()
         {
@@ -59,6 +59,18 @@ namespace Ajedrez_interactuable_con_form
             };
 
             CargarImagenesPiezas();
+        }
+
+        private void PanelTablero_MouseClick(object sender, MouseEventArgs e)
+        {
+            int columna = e.X / tamaño;
+            int fila = e.Y / tamaño;
+            CasillaSeleccionada?.Invoke(fila, columna);
+        }
+
+        private void LblUndo_Click(object sender, EventArgs e)
+        {
+            UndoSolicitado?.Invoke();
         }
 
         public void MostrarMovimientosPosibles(List<string> jugadas)
@@ -244,22 +256,10 @@ namespace Ajedrez_interactuable_con_form
 
         }
 
-        private void PanelTablero_MouseClick(object sender, MouseEventArgs e)
-        {
-            int columna = e.X / tamaño;
-            int fila = e.Y / tamaño;
-            CasillaSeleccionada?.Invoke(fila, columna);
-        }
-
-        private void LblUndo_Click(object sender, EventArgs e)
-        {
-            UndoSolicitado?.Invoke();
-        }
-
         private void FormPartida_FormClosing(object sender, FormClosingEventArgs e)
         {
             VistaCerrada?.Invoke();
-            this.Close();
+            Application.Exit();
         }
 
         private void PanelTablero_Paint(object sender, PaintEventArgs e)

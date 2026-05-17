@@ -121,6 +121,7 @@
             Controls.Add(label1);
             Name = "FormMenu";
             Text = "FormMenu";
+            FormClosing += FormMenu_FormClosing;
             ((System.ComponentModel.ISupportInitialize)PbxAndrea).EndInit();
             ((System.ComponentModel.ISupportInitialize)PbxNatasha).EndInit();
             ((System.ComponentModel.ISupportInitialize)PbxAlejandra).EndInit();

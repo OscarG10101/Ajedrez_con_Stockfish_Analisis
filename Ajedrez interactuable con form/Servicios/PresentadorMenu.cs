@@ -22,8 +22,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
         {
             var juego = new TableroAjedrez();
             var motor = new StockfishMotor();
+            var analista = new StockfishAnalista();
             var formPartida = new FormPartida();
-            var presentador = new PresentadorPartida(formPartida, juego, motor, rival);
+            var presentador = new PresentadorPartida(formPartida, juego, motor, analista, rival);
 
             _vista.CerrarMenu();
             formPartida.Show();
