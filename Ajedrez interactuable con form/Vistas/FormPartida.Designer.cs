@@ -76,7 +76,7 @@
             // 
             // PanelEvaluacion
             // 
-            PanelEvaluacion.Location = new Point(561, 120);
+            PanelEvaluacion.Location = new Point(550, 120);
             PanelEvaluacion.Name = "PanelEvaluacion";
             PanelEvaluacion.Size = new Size(20, 400);
             PanelEvaluacion.TabIndex = 7;

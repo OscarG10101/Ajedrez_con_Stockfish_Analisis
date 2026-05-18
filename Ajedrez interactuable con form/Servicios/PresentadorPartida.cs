@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Ajedrez_interactuable_con_form.Modelos;
 using Ajedrez_interactuable_con_form.Vistas;
+using Microsoft.VisualBasic.Logging;
 
 namespace Ajedrez_interactuable_con_form.Servicios
 {
@@ -19,7 +20,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
         private bool _turnoUsuario = true;
         private bool _partidaTerminada = true;
 
-        public PresentadorPartida(IVistaPartida vista, TableroAjedrez juego, 
+        public PresentadorPartida(IVistaPartida vista, TableroAjedrez juego,
             StockfishMotor motor, StockfishAnalista analista, TipoRival rival)
         {
             _vista = vista;
@@ -31,9 +32,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
             _vista.UndoSolicitado += OnUndoSolicitado;
             _vista.VistaCerrada += () => { _motor.Cerrar(); _analista.Cerrar(); };
 
-            _motor.SinJugadasLegales += OnSinJugadasLegales;
-
-            _analista.MateDetectado += OnSinJugadasLegales;
+            _motor.SinJugadasLegales += () => OnSinJugadasLegales(jugabanBlancas : true);
 
             _juego.TableroActualizado += () => _vista.ActualizarTablero();
             _vista.SincronizarTablero(_juego.Tablero);
@@ -62,7 +61,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
         private async void OnCasillaSeleccionada(int fila, int columna)
         {
             if (!_turnoUsuario)
-                return;
+               return;
+
+            _partidaTerminada = false;
 
             if (_movimientosPosibles.Count == 0) // primer clic
             {
@@ -70,7 +71,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
                 if (legales.Count == 0)
                 {
-                    OnSinJugadasLegales();
+                    OnSinJugadasLegales(jugabanBlancas : false);
                     return;
                 }
 
@@ -101,10 +102,13 @@ namespace Ajedrez_interactuable_con_form.Servicios
                     ? jugada : destinos[0];
 
                 JuegaUsuario(jugadaFinal);
-                _ = EscucharAnalisisContinuoAsync();
+                _ = EscucharAnalisisContinuoAsync(turnoBlancasAlAnalizar : false);
 
                 _vista.AgregarJugadaHistorial("Blancas", jugadaFinal);
                 _vista.MostrarMensajeEstado($"Tu jugada: {jugadaFinal}");
+
+                var jugadasLegales = await _motor.PedirJugadasLegalesAsync(_juego.Historial);
+                if (jugadasLegales.Count == 0) OnSinJugadasLegales(jugabanBlancas: false);
 
                 OnBestMoveEncontrado(await _motor.PedirBestMove(_juego.Historial));
             }
@@ -135,27 +139,31 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private async void OnBestMoveEncontrado(string bestMove) // maquina juega
         {
+            if (bestMove == "") 
+            {
+                _turnoUsuario = true;
+                return;
+            }
+
             JuegaStockfish(bestMove);
+
             _turnoUsuario = true;
 
-            _ = EscucharAnalisisContinuoAsync();
+            _ = EscucharAnalisisContinuoAsync(turnoBlancasAlAnalizar : true);
+
+            await _motor.PedirBestMove(_juego.Historial);
 
             _vista.MostrarJugadaStockfish(bestMove);
             _vista.AgregarJugadaHistorial("Negras", bestMove);
-
-            var legales = await _motor.PedirJugadasLegalesAsync(_juego.Historial);
-            if (legales.Count == 0) OnSinJugadasLegales();
         }
 
-        private async Task EscucharAnalisisContinuoAsync()
+        private async Task EscucharAnalisisContinuoAsync(bool turnoBlancasAlAnalizar)
         {
             try
             {
                 await foreach (int eval in _analista.Analizarposicion(_juego.Historial))
                 {
-                    bool turnoNegras = _juego.Historial.Count % 2 != 0;
-                    int evalDesdeBlancas = turnoNegras ? -eval : eval;
-
+                    int evalDesdeBlancas = turnoBlancasAlAnalizar ? eval : -eval;
                     _vista.MostrarEvaluacionStockfish(evalDesdeBlancas);
                 }
             }
@@ -165,21 +173,20 @@ namespace Ajedrez_interactuable_con_form.Servicios
             }
         }
 
-        private void OnSinJugadasLegales()
+        private void OnSinJugadasLegales(bool jugabanBlancas)
         {
             if (_partidaTerminada) return;
             _partidaTerminada = true;
+
             File.AppendAllText("stockfish_log.txt",
         $"[FinPartida] Historial.Count={_juego.Historial.Count} " +
         $"UltimaEvaluacionFueMate={_analista.UltimaEvaluacionFueMate}\n");
             _analista.DetenerAnalisis();
             ResultadoPartida resultado;
 
-            bool turnoBlancas = _juego.Historial.Count % 2 == 0;
-
-            if (_analista.UltimaEvaluacionFueMate)
+            if (_analista.UltimaEvaluacionFueMate || _motor.UltimaEvaluacionFueMate) // doble seguridad
             {
-                resultado = turnoBlancas ? ResultadoPartida.GanaNegras : ResultadoPartida.GanaBlancas;
+                resultado = jugabanBlancas ? ResultadoPartida.GanaNegras : ResultadoPartida.GanaBlancas;
             }
             else if (_juego.EsTripleRepeticion())
                 resultado = ResultadoPartida.TripleRepeticion;
@@ -203,7 +210,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
             if (_juego.Historial.Count < 2)
                 return;
 
-            _juego.DeshacerJugadas();
+            if (_analista.UltimaEvaluacionFueMate) _juego.DeshacerJugadas(esMate : true);
+            else _juego.DeshacerJugadas();
+            
             _turnoUsuario = true;
             _partidaTerminada = false;
 

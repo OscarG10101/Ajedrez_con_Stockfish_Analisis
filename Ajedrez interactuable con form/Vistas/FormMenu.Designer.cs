@@ -28,27 +28,27 @@
         /// </summary>
         private void InitializeComponent()
         {
-            label1 = new Label();
+            rival = new Label();
             BtnAndrea = new Button();
             BtnNatasha = new Button();
             BtnAlejandra = new Button();
-            PbxAndrea = new PictureBox();
-            PbxNatasha = new PictureBox();
-            PbxAlejandra = new PictureBox();
+            PbxAndrea = new SmoothPictureBox();
+            PbxNatasha = new SmoothPictureBox();
+            PbxAlejandra = new SmoothPictureBox();
             ((System.ComponentModel.ISupportInitialize)PbxAndrea).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PbxNatasha).BeginInit();
             ((System.ComponentModel.ISupportInitialize)PbxAlejandra).BeginInit();
             SuspendLayout();
             // 
-            // label1
+            // rival
             // 
-            label1.AutoSize = true;
-            label1.Font = new Font("Rockwell", 20F, FontStyle.Italic, GraphicsUnit.Point, 0);
-            label1.Location = new Point(533, 26);
-            label1.Name = "label1";
-            label1.Size = new Size(345, 46);
-            label1.TabIndex = 0;
-            label1.Text = "Seleccione el rival";
+            rival.AutoSize = true;
+            rival.Font = new Font("Rockwell", 20F, FontStyle.Italic, GraphicsUnit.Point, 0);
+            rival.Location = new Point(533, 26);
+            rival.Name = "rival";
+            rival.Size = new Size(345, 46);
+            rival.TabIndex = 0;
+            rival.Text = "Seleccione el rival";
             // 
             // BtnAndrea
             // 
@@ -111,14 +111,15 @@
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1624, 648);
+            BackColor = SystemColors.ControlDark;
+            ClientSize = new Size(1406, 743);
             Controls.Add(PbxAlejandra);
             Controls.Add(PbxNatasha);
             Controls.Add(PbxAndrea);
             Controls.Add(BtnAlejandra);
             Controls.Add(BtnNatasha);
             Controls.Add(BtnAndrea);
-            Controls.Add(label1);
+            Controls.Add(rival);
             Name = "FormMenu";
             Text = "FormMenu";
             FormClosing += FormMenu_FormClosing;
@@ -131,12 +132,12 @@
 
         #endregion
 
-        private Label label1;
+        private Label rival;
         private Button BtnAndrea;
         private Button BtnNatasha;
         private Button BtnAlejandra;
-        private PictureBox PbxAndrea;
-        private PictureBox PbxNatasha;
-        private PictureBox PbxAlejandra;
+        private SmoothPictureBox PbxAndrea;
+        private SmoothPictureBox PbxNatasha;
+        private SmoothPictureBox PbxAlejandra;
     }
 }

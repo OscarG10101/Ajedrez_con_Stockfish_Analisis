@@ -19,8 +19,6 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private bool _ultimaEvaluacionFueMate = false;
         public bool UltimaEvaluacionFueMate => _ultimaEvaluacionFueMate; 
-        public event Action<int>? Evaluacion_Actualizada;
-        public event Action? MateDetectado;
 
         public void Iniciar(string rutaExe)
         {
@@ -86,11 +84,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 _canalEvaluacion?.Writer.TryWrite(eval);
             }
             else if (tipo == "mate" && int.TryParse(valor, out int mate))
-            {
+            {   
                 _ultimaEvaluacionFueMate = true;
                 _canalEvaluacion?.Writer.TryWrite(mate > 0 ? 100000 : -100000);
-
-                if (mate == 1 || mate == -1) MateDetectado?.Invoke();
             }
         }
 

@@ -9,8 +9,8 @@ namespace Ajedrez_interactuable_con_form.Modelos
     public enum TipoRival
     {
         Humano,
-        Andrea = 1320,
-        Natasha = 1400,
-        Alejandra = 1500
+        Andrea = 800,
+        Natasha = 1500,
+        Alejandra = 2200
     }
 }

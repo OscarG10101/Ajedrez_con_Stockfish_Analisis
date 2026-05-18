@@ -9,6 +9,7 @@ using Ajedrez_interactuable_con_form.Modelos;
 using Ajedrez_interactuable_con_form.Vistas;
 using Ajedrez_interactuable_con_form.Servicios;
 using System.Threading.Tasks;
+using System.Drawing.Imaging;
 
 namespace Ajedrez_interactuable_con_form
 {
@@ -121,8 +122,8 @@ namespace Ajedrez_interactuable_con_form
 
                 PanelEvaluacion.Invalidate();
 
-                comentarioActual = centipeones > 50 ? "¡Vas a perder!" :
-                                 centipeones < -50 ? "¡Vas a ganar!" :
+                comentarioActual = _evaluacionActual > 50 ? "¡Vas a Ganar!" :
+                                 _evaluacionActual < -50 ? "¡Vas a Perder!" :
                                  "¡Partida equilibrada!";
                 timerGlobo.Start();
                 this.Invalidate();
@@ -239,16 +240,22 @@ namespace Ajedrez_interactuable_con_form
             int alto = PanelEvaluacion.Height;
             int ancho = PanelEvaluacion.Width;
 
-            int eval = Math.Max(-10000, Math.Min(10000, _evaluacionActual)); // Limitar entre -10000 y 10000
+            // Convertir centipeones a peones
+            float peones = Math.Max(-15f, Math.Min(15f, _evaluacionActual / 100f));
 
-            float porcentajeBlancas = (eval + 10000f) / 20000f; // Convertir a porcentaje (0 a 1)
+            // Escala logarítmica: misma fórmula que Lichess
+            // tanh comprime el rango infinito a (-1, 1) suavemente
+            // Multiplicador controla qué tan rápido se satura (4 = ~3 peones ya es ventaja clara)
+            float normalizado = (float)Math.Tanh(peones / 4.0);
+
+            // Convertir de (-1,1) a (0,1) desde perspectiva de blancas
+            float porcentajeBlancas = (normalizado + 1f) / 2f;
+
             int alturaBlancas = (int)(alto * porcentajeBlancas);
             int alturaNegras = alto - alturaBlancas;
 
-            g.FillRectangle(Brushes.Black, 0, 0, ancho, alturaNegras); // Parte negra
-
-            g.FillRectangle(Brushes.White, 0, alturaNegras, ancho, alturaBlancas); // Parte blanca
-
+            g.FillRectangle(Brushes.Black, 0, 0, ancho, alturaNegras);
+            g.FillRectangle(Brushes.White, 0, alturaNegras, ancho, alturaBlancas);
         }
 
         private void FormPartida_FormClosing(object sender, FormClosingEventArgs e)

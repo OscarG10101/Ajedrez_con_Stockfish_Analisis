@@ -179,13 +179,23 @@ namespace Ajedrez_interactuable_con_form.Modelos
             return sb.ToString();
         }
 
-        public void DeshacerJugadas()
+        public void DeshacerJugadas(bool esMate = false)
         {
             if (Historial.Count < 2) return;
 
-            var ultimasJugadas = Historial.SkipLast(2).ToList();
+            bool jugadaUsuario = Historial.Count % 2 == 0 ? true : false;
+            int jugadasAQuitar = esMate ? 3 : 2;
+            if (jugadasAQuitar == 3)
+            {
+                jugadasAQuitar = jugadaUsuario ? 2 : 3;
+            }
 
-            Tablero = new Pieza[8, 8];
+            var ultimasJugadas = Historial.SkipLast(jugadasAQuitar).ToList();
+
+            for (int f = 0; f < 8; f++)
+                for (int c = 0; c < 8; c++)
+                    Tablero[f, c] = null;
+
             Historial = new List<string>();
             InicializarTablero(); // Volver a colocar las piezas
 
