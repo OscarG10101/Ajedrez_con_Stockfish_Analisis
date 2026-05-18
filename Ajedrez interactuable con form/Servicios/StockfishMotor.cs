@@ -20,12 +20,12 @@ namespace Ajedrez_interactuable_con_form.Servicios
         private StreamWriter? input = null;
 
         private TaskCompletionSource<List<string>>? tcsJugadasLegales;
+        private TaskCompletionSource<string>? tcsbestMove;
         private List<string> _jugadasTemp = new List<string>(); // se usa para acumular jugadas legales mientras se espera la respuesta completa
         private bool _ultimaEvaluacionFueMate = false;
         public bool UltimaEvaluacionFueMate => _ultimaEvaluacionFueMate; // otras clases puedan consultar si la última evaluación fue un mate
 
         // Evento para notificar jugadas
-        public event Action<string>? BestMove_Encontrado;
         public event Action? SinJugadasLegales;
 
         public void Iniciar(string rutaExe)
@@ -87,7 +87,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
             _estadoActual = EstadoEspera.EsperandoJugadasLegales;
 
             // Preparo para recibir jugadas legales
-            tcsJugadasLegales = new TaskCompletionSource<List<string>>(TaskCreationOptions.RunContinuationsAsynchronously); // 
+            tcsJugadasLegales = new TaskCompletionSource<List<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
             _jugadasTemp = new List<string>();
 
             string movimientos = string.Join(" ", historial);
@@ -119,15 +119,19 @@ namespace Ajedrez_interactuable_con_form.Servicios
             }
         }
 
-        public void PedirBestMove(List<string> historial)
+        public async Task<string> PedirBestMove(List<string> historial)
         {
-            if (input == null) return;
+            if (input == null) return "";
 
             _estadoActual = EstadoEspera.EsperandoBestMove;
+
+            tcsbestMove = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             string movimientos = string.Join(" ", historial);
             input.WriteLine("position startpos moves " + movimientos);
             input.WriteLine("go movetime 500");
+
+            return await tcsbestMove.Task;
         }
 
         private void ProcesarBestMove(DataReceivedEventArgs e)
@@ -139,6 +143,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 if (partes.Length >= 2 && partes[1] == "(none)")
                 {
                     SinJugadasLegales?.Invoke();
+                    tcsbestMove!.TrySetResult("");
                     _estadoActual = EstadoEspera.Ninguno;
                     return;
                 }
@@ -146,7 +151,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 if (partes.Length >= 2)
                 {
                     string bestMove = partes[1];
-                    BestMove_Encontrado?.Invoke(bestMove);
+                    tcsbestMove!.TrySetResult(bestMove);
 
                     _estadoActual = EstadoEspera.Ninguno;
                 }

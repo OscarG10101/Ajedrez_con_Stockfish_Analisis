@@ -88,10 +88,8 @@ namespace Ajedrez_interactuable_con_form
         }
 
         public void AgregarJugadaHistorial(string turno, string jugada)
-        {
-            this.Invoke(() => { 
+        { 
                 LbxHistorial.Items.Add($"{turno}: {jugada}");
-            });
         }
 
         public void LimpiarHistorial()
@@ -114,8 +112,6 @@ namespace Ajedrez_interactuable_con_form
 
         public void MostrarEvaluacionStockfish(int centipeones)
         {
-            this.Invoke(() =>
-            {
                 _evaluacionActual = centipeones;
 
                 string texto = centipeones >= 0
@@ -130,7 +126,6 @@ namespace Ajedrez_interactuable_con_form
                                  "¡Partida equilibrada!";
                 timerGlobo.Start();
                 this.Invalidate();
-            });
         }
 
         public void MostrarFinPartida(ResultadoPartida resultado)
@@ -259,6 +254,7 @@ namespace Ajedrez_interactuable_con_form
         private void FormPartida_FormClosing(object sender, FormClosingEventArgs e)
         {
             VistaCerrada?.Invoke();
+            Task.Delay(1000);
             Application.Exit();
         }
 

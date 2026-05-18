@@ -4,6 +4,7 @@ using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Ajedrez_interactuable_con_form.Servicios
@@ -12,6 +13,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
     {
         private Process? analisis;
         private StreamWriter? input;
+
+        private Channel<int>? _canalEvaluacion;
+        private CancellationTokenSource? _ctsActual;
 
         private bool _ultimaEvaluacionFueMate = false;
         public bool UltimaEvaluacionFueMate => _ultimaEvaluacionFueMate; 
@@ -45,14 +49,22 @@ namespace Ajedrez_interactuable_con_form.Servicios
             input.WriteLine("isready");
         }
 
-        public void Analizarposicion(List<string> historial)
+        public IAsyncEnumerable<int> Analizarposicion(List<string> historial)
         {
-            if (input == null) return;
+            if (input == null) throw new InvalidOperationException("El motor no inició correctamente");
+
+            _ctsActual?.Cancel(); // si !null cancelar anterior
+            _canalEvaluacion?.Writer.TryComplete(); // si !null completar int anterior
+
+            _ctsActual = new CancellationTokenSource(); // reiniciar
+            _canalEvaluacion = Channel.CreateUnbounded<int>();
 
             string movimientos = string.Join(" ", historial);
             input.WriteLine("stop");
             input.WriteLine("position startpos moves " + movimientos);
             input.WriteLine("go infinite");
+
+            return _canalEvaluacion.Reader.ReadAllAsync(_ctsActual.Token);
         }
 
         public void ProcesarLinea(DataReceivedEventArgs? e)
@@ -71,12 +83,12 @@ namespace Ajedrez_interactuable_con_form.Servicios
             if (tipo == "cp" && int.TryParse(valor, out int eval))
             {
                 _ultimaEvaluacionFueMate = false;
-                Evaluacion_Actualizada?.Invoke(eval);
+                _canalEvaluacion?.Writer.TryWrite(eval);
             }
             else if (tipo == "mate" && int.TryParse(valor, out int mate))
             {
                 _ultimaEvaluacionFueMate = true;
-                Evaluacion_Actualizada?.Invoke(mate > 0 ? 100000 : -100000);
+                _canalEvaluacion?.Writer.TryWrite(mate > 0 ? 100000 : -100000);
 
                 if (mate == 1 || mate == -1) MateDetectado?.Invoke();
             }
@@ -84,6 +96,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         public void DetenerAnalisis()
         {
+            _ctsActual?.Cancel();
+            _canalEvaluacion?.Writer.TryComplete();
             input?.WriteLine("stop");
         }
 
@@ -108,6 +122,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 finally
                 {
                     analisis.Dispose();
+                    _ctsActual?.Dispose();
+                    _canalEvaluacion = null;
                     analisis = null!;
                     input = null;
                 }

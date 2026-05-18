@@ -31,10 +31,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
             _vista.UndoSolicitado += OnUndoSolicitado;
             _vista.VistaCerrada += () => { _motor.Cerrar(); _analista.Cerrar(); };
 
-            _motor.BestMove_Encontrado += OnBestMoveEncontrado;
             _motor.SinJugadasLegales += OnSinJugadasLegales;
 
-            _analista.Evaluacion_Actualizada += OnEvaluacionActualizada;
             _analista.MateDetectado += OnSinJugadasLegales;
 
             _juego.TableroActualizado += () => _vista.ActualizarTablero();
@@ -77,7 +75,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 }
 
                 string origen = CasillaToTexto(fila, columna);
-                _movimientosPosibles = legales.Where(j => j.StartsWith(origen)).ToList();
+                _movimientosPosibles = legales.Where(j => j.StartsWith(origen)).ToList(); // se quedan en lista solo las jugadas de pieza select
                 _vista.MostrarMovimientosPosibles(_movimientosPosibles);
                 return;
             }
@@ -91,6 +89,9 @@ namespace Ajedrez_interactuable_con_form.Servicios
             {
                 _turnoUsuario = false;
 
+                _movimientosPosibles.Clear();
+                _vista.LimpiarSeleccion();
+
                 var pieza = _juego.ObtenerPieza(8 - (primeraSeleccion[1] - '0'), 
                     primeraSeleccion[0] - 'a');
 
@@ -100,16 +101,26 @@ namespace Ajedrez_interactuable_con_form.Servicios
                     ? jugada : destinos[0];
 
                 JuegaUsuario(jugadaFinal);
-                _analista.Analizarposicion(_juego.Historial);
+                _ = EscucharAnalisisContinuoAsync();
 
                 _vista.AgregarJugadaHistorial("Blancas", jugadaFinal);
                 _vista.MostrarMensajeEstado($"Tu jugada: {jugadaFinal}");
 
-                _motor.PedirBestMove(_juego.Historial);
+                OnBestMoveEncontrado(await _motor.PedirBestMove(_juego.Historial));
             }
+            else
+            {
+                _movimientosPosibles.Clear();
+                _vista.LimpiarSeleccion();
 
-            _movimientosPosibles.Clear();
-            _vista.LimpiarSeleccion();
+                var nuevaPieza = _juego.ObtenerPieza(fila, columna);
+                if (nuevaPieza != null && nuevaPieza.EsBlanca)
+                {
+                    // Llamamos recursivamente al mismo método. 
+                    // Como acabamos de limpiar '_movimientosPosibles', este llamado actuará automáticamente como un "Primer Clic"
+                    OnCasillaSeleccionada(fila, columna);
+                }
+            }
         }
 
         private void JuegaUsuario(string jugada)
@@ -127,7 +138,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
             JuegaStockfish(bestMove);
             _turnoUsuario = true;
 
-            _analista.Analizarposicion(_juego.Historial);
+            _ = EscucharAnalisisContinuoAsync();
 
             _vista.MostrarJugadaStockfish(bestMove);
             _vista.AgregarJugadaHistorial("Negras", bestMove);
@@ -136,11 +147,22 @@ namespace Ajedrez_interactuable_con_form.Servicios
             if (legales.Count == 0) OnSinJugadasLegales();
         }
 
-        private void OnEvaluacionActualizada(int eval)
+        private async Task EscucharAnalisisContinuoAsync()
         {
-            bool turnoNegras = _juego.Historial.Count % 2 != 0;
-            int evalDesdeBlancas = turnoNegras ? -eval : eval;
-            _vista.MostrarEvaluacionStockfish(evalDesdeBlancas);
+            try
+            {
+                await foreach (int eval in _analista.Analizarposicion(_juego.Historial))
+                {
+                    bool turnoNegras = _juego.Historial.Count % 2 != 0;
+                    int evalDesdeBlancas = turnoNegras ? -eval : eval;
+
+                    _vista.MostrarEvaluacionStockfish(evalDesdeBlancas);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
         }
 
         private void OnSinJugadasLegales()
