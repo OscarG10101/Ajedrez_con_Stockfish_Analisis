@@ -28,6 +28,17 @@ namespace Ajedrez_interactuable_con_form
         private int _evaluacionActual = 0;
         private string comentarioActual = "";
 
+        public Image? FotoRival {  get; set; }
+        public string NombreRival { get; set; } = "";
+        public string EloRival { get; set; } = "";
+
+        private readonly Color colorFondoGlobal = Color.FromArgb(22, 21, 18);
+        private readonly Color colorPanel = Color.FromArgb(38, 37, 34);
+        private readonly Color colorTextoClaro = Color.White;
+        private readonly Color colorTextoGris = Color.FromArgb(153, 153, 153);
+        private readonly Color colorVerde = Color.FromArgb(129, 182, 76);
+        private readonly Color colorBotonRojo = Color.FromArgb(180, 60, 60);
+
         // Globo de texto
         private GloboComic globoTexto = new GloboComic();
         private System.Windows.Forms.Timer timerGlobo = new System.Windows.Forms.Timer { Interval = 3000 };
@@ -41,6 +52,8 @@ namespace Ajedrez_interactuable_con_form
         public FormPartida()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.DoubleBuffered = true;
             typeof(Panel).InvokeMember
                 ("DoubleBuffered",
@@ -60,6 +73,138 @@ namespace Ajedrez_interactuable_con_form
             };
 
             CargarImagenesPiezas();
+            this.Load += (s, e) => EstilizarUI();
+        }
+        private void EstilizarUI()
+        {
+            this.BackColor = colorFondoGlobal;
+            this.Text = "Ajedrez Engine";
+            this.FormBorderStyle = FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
+
+            int margen = 20;
+            int anchoBarra = 14;
+            int anchoFoto = 130;
+            int altoFoto = 160;
+            int anchoPanel = 300;
+            int pad = 12;
+            int altoForm = this.ClientSize.Height - margen * 2;
+            int altoTablero = altoForm;
+            int anchoTablero = altoTablero;
+
+            // ── Calcular ancho total del layout para centrar ─────────
+            int anchoTotal = anchoFoto + 6 + anchoBarra + 8 + anchoTablero + margen + anchoPanel;
+            int xInicio = (this.ClientSize.Width - anchoTotal) / 2;
+
+            // ── Foto del rival ───────────────────────────────────────
+            // Foto — posición completamente independiente
+            PbxRival.Location = new Point(margen + xInicio - 100, margen + (altoForm / 2) - altoFoto + 40);
+            PbxRival.Size = new Size(anchoFoto + 30, altoFoto);
+            PbxRival.SizeMode = PictureBoxSizeMode.StretchImage;
+            PbxRival.BackColor = colorFondoGlobal;
+
+            // ── Barra de evaluación ──────────────────────────────────
+            int xBarra = xInicio + anchoFoto + 6; // mantiene su lugar original en el layout
+            PanelEvaluacion.Location = new Point(xBarra, margen);
+            PanelEvaluacion.Size = new Size(anchoBarra, altoForm);
+            PanelEvaluacion.BackColor = Color.FromArgb(50, 50, 50);
+
+            LblEvaluacionNumero.AutoSize = true;
+            LblEvaluacionNumero.ForeColor = colorTextoGris;
+            LblEvaluacionNumero.Font = new Font("Segoe UI", 8, FontStyle.Bold);
+            LblEvaluacionNumero.BackColor = Color.Transparent;
+            LblEvaluacionNumero.Location = new Point(
+                xBarra - 45,
+                PanelEvaluacion.Top + (PanelEvaluacion.Height / 2) - 12);
+
+            // ── Tablero ──────────────────────────────────────────────
+            PanelTablero.Location = new Point(PanelEvaluacion.Right + 8, margen);
+            PanelTablero.Size = new Size(anchoTablero, altoTablero);
+            PanelTablero.BackColor = colorFondoGlobal;
+            tableroBitmap = null;
+
+            // ── Panel lateral derecho ────────────────────────────────
+            int xPanel = PanelTablero.Right + margen;
+            int altoPanel = altoForm;
+
+            Panel panelLateral = new SmoothPanel
+            {
+                Location = new Point(xPanel, margen),
+                Size = new Size(anchoPanel, altoPanel),
+                BackColor = colorPanel,
+            };
+            this.Controls.Add(panelLateral);
+
+            // Nombre
+            Label lblNombre = new Label
+            {
+                Text = NombreRival,
+                ForeColor = colorTextoClaro,
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                Location = new Point(pad, pad),
+                Size = new Size(anchoPanel - pad * 2, 24),
+                AutoSize = false,
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Transparent,
+            };
+            panelLateral.Controls.Add(lblNombre);
+
+            // ELO — más alto para tener aire abajo
+            Label lblElo = new Label
+            {
+                Text = EloRival,
+                ForeColor = colorVerde,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Location = new Point(pad, lblNombre.Bottom + 6), // +6 en lugar de +2
+                Size = new Size(anchoPanel - pad * 2, 24),   // 24 en lugar de 20
+                AutoSize = false,
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Transparent,
+            };
+
+            // Separador con más aire después del ELO
+            Panel sep = new Panel
+            {
+                Location = new Point(pad, lblElo.Bottom + 10), // +10 en lugar de +6
+                Size = new Size(anchoPanel - pad * 2, 1),
+                BackColor = Color.FromArgb(60, 60, 55),
+            };
+
+            // Estado
+            LblRespuesta.Font = new Font("Segoe UI", 9, FontStyle.Italic);
+            LblRespuesta.ForeColor = colorTextoGris;
+            LblRespuesta.BackColor = Color.Transparent;
+            LblRespuesta.Location = new Point(pad, sep.Bottom + 4);
+            LblRespuesta.Size = new Size(anchoPanel - pad * 2, 32);
+            LblRespuesta.TextAlign = ContentAlignment.MiddleCenter;
+            panelLateral.Controls.Add(lblElo);   // ← faltaba
+            panelLateral.Controls.Add(sep);      // ← faltaba
+            panelLateral.Controls.Add(LblRespuesta);
+            panelLateral.Controls.Add(LblRespuesta);
+
+            // Historial — todo el espacio disponible entre estado y botón
+            int yHistorial = LblRespuesta.Bottom + 6;
+            LbxHistorial.Location = new Point(pad, yHistorial);
+            LbxHistorial.Size = new Size(anchoPanel - pad * 2, altoPanel - yHistorial - 56);
+            LbxHistorial.BackColor = Color.FromArgb(28, 27, 24);
+            LbxHistorial.ForeColor = colorTextoClaro;
+            LbxHistorial.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+            LbxHistorial.BorderStyle = BorderStyle.None;
+            panelLateral.Controls.Add(LbxHistorial);
+
+            // Botón deshacer
+            LblUndo.Text = "⟵  Deshacer";
+            LblUndo.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            LblUndo.ForeColor = colorTextoClaro;
+            LblUndo.BackColor = colorBotonRojo;
+            LblUndo.TextAlign = ContentAlignment.MiddleCenter;
+            LblUndo.Cursor = Cursors.Hand;
+            LblUndo.Location = new Point(pad, altoPanel - 44);
+            LblUndo.Size = new Size(anchoPanel - pad * 2, 34);
+            panelLateral.Controls.Add(LblUndo);
+
+            panelLateral.BringToFront();
+           // PbxRival.BringToFront();
         }
 
         private void PanelTablero_MouseClick(object sender, MouseEventArgs e)
@@ -91,6 +236,7 @@ namespace Ajedrez_interactuable_con_form
         public void AgregarJugadaHistorial(string turno, string jugada)
         { 
                 LbxHistorial.Items.Add($"{turno}: {jugada}");
+                LbxHistorial.TopIndex = LbxHistorial.Items.Count - 1;
         }
 
         public void LimpiarHistorial()
@@ -168,15 +314,21 @@ namespace Ajedrez_interactuable_con_form
             if (pieza.PosX < 0) pieza.PosX = pieza.Columna * tamaño;
             if (pieza.PosY < 0) pieza.PosY = pieza.Fila * tamaño;
 
-            while (Math.Abs(pieza.PosX - destinoX) > 0.1 ||
-                   Math.Abs(pieza.PosY - destinoY) > 0.1)
+            while (Math.Abs(pieza.PosX - destinoX) > paso ||
+                   Math.Abs(pieza.PosY - destinoY) > paso)
             {
-                pieza.PosX += Math.Sign(destinoX - pieza.PosX) * paso;
-                pieza.PosY += Math.Sign(destinoY - pieza.PosY) * paso;
+                // Mover solo lo que falta si es menor que el paso
+                float dx = destinoX - pieza.PosX;
+                float dy = destinoY - pieza.PosY;
+
+                pieza.PosX += Math.Abs(dx) > paso ? Math.Sign(dx) * paso : dx;
+                pieza.PosY += Math.Abs(dy) > paso ? Math.Sign(dy) * paso : dy;
+
                 PanelTablero.Invalidate();
                 await Task.Delay(15);
             }
 
+            // Snap final exacto
             pieza.PosX = -1;
             pieza.PosY = -1;
         }
@@ -301,8 +453,8 @@ namespace Ajedrez_interactuable_con_form
             if (!string.IsNullOrEmpty(comentarioActual))
             {
                 var area = new Rectangle(
-                    PbxRival.Left - 20, PbxRival.Top - 120,
-                    PbxRival.Width + 40, 100);
+                    PbxRival.Left - 20, PbxRival.Top - 100,
+                    PbxRival.Width + 40, 80);
                 globoTexto.Dibujar(e.Graphics, area, comentarioActual);
             }
         }

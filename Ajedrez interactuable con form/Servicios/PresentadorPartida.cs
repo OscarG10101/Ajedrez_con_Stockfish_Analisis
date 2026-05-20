@@ -39,6 +39,31 @@ namespace Ajedrez_interactuable_con_form.Servicios
             _juego.MostrarMenuCoronacionUI = _vista.MostrarMenuCoronacion;
 
             IniciarMotor(rival);
+
+            ConfigurarRival(rival);
+        }
+        
+        public void ConfigurarRival(TipoRival rival)
+        {
+            if (_vista is FormPartida form)
+            {
+                form.NombreRival = rival.ToString();
+                form.EloRival = rival switch
+                {
+                    TipoRival.Andrea => "800 ELO",
+                    TipoRival.Natasha => "1500 ELO",
+                    TipoRival.Alejandra => "2200 ELO",
+                    _ => ""
+                };
+                form.FotoRival = rival switch
+                {
+                    TipoRival.Andrea => Properties.Resources.Andrea,
+                    TipoRival.Natasha => Properties.Resources.Natasha,
+                    TipoRival.Alejandra => Properties.Resources.Alejandra,
+                    _ => null
+                };
+                form.PbxRival.Image = form.FotoRival;
+            }
         }
 
         public void IniciarMotor(TipoRival rival)

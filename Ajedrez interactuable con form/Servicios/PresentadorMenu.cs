@@ -26,6 +26,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
             var formPartida = new FormPartida();
             var presentador = new PresentadorPartida(formPartida, juego, motor, analista, rival);
 
+            presentador.ConfigurarRival(rival);
             _vista.CerrarMenu();
             formPartida.Show();
         }

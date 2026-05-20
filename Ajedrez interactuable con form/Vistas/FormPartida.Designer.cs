@@ -126,7 +126,7 @@
         private ListBox LbxHistorial;
         private Label LblRespuesta;
         private Panel PanelTablero;
-        private PictureBox PbxRival;
+        internal PictureBox PbxRival;
         private Panel PanelEvaluacion;
         private Label LblEvaluacionNumero;
         private Label LblUndo;
