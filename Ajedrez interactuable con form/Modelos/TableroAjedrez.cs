@@ -11,8 +11,12 @@ namespace Ajedrez_interactuable_con_form.Modelos
         public Pieza?[,] Tablero { get; private set; } = new Pieza?[8, 8];
         public List<string> Historial { get; private set; } = new List<string>();
 
-        // Evento que notifica que se movió una pieza
-        public event Action<string>? JugadaRealizada;
+        private TaskCompletionSource<char>? tcsCoronacion;
+        public Task<char> EsperarCoronacion() 
+        { 
+            tcsCoronacion = new TaskCompletionSource<char>();
+            return tcsCoronacion.Task;
+        }
 
         // Evento para pedir redibujar el tablero
         public event Action? TableroActualizado;
@@ -47,10 +51,9 @@ namespace Ajedrez_interactuable_con_form.Modelos
                 Tablero[fila, col] = new Pieza(fila, col, esBlanco, piezas[col]);
         }
 
-        public void RegistrarJugada(string jugada, bool esHumano)
+        public void RegistrarJugada(string jugada)
         {
             Historial.Add(jugada);
-            RealizarJugada(jugada, esHumano);
         }
 
         public void RealizarJugada(string jugada, bool esHumano)
@@ -107,7 +110,8 @@ namespace Ajedrez_interactuable_con_form.Modelos
                     MostrarMenuCoronacionUI?.Invoke(filaDestino, colDestino, pieza, (piezaElegida) =>
                     {
                         string jugadaConCoronacion = jugada + piezaElegida;
-                        JugadaRealizada?.Invoke(jugadaConCoronacion); 
+                        TableroActualizado?.Invoke();
+                        tcsCoronacion?.TrySetResult(piezaElegida);
                     });
                 }
                 else
@@ -126,9 +130,6 @@ namespace Ajedrez_interactuable_con_form.Modelos
             }
 
             TableroActualizado?.Invoke(); // notifica al Form1 que redibuje
-
-            if (EsHumano)
-                JugadaRealizada?.Invoke(jugada);
         }
 
         public bool EsTripleRepeticion()
@@ -179,31 +180,21 @@ namespace Ajedrez_interactuable_con_form.Modelos
             return sb.ToString();
         }
 
-        public void DeshacerJugadas(bool esMate = false)
+        public void DeshacerJugadas()
         {
             if (Historial.Count < 2) return;
 
-            bool jugadaUsuario = Historial.Count % 2 == 0 ? true : false;
-            int jugadasAQuitar = esMate ? 3 : 2;
-            if (jugadasAQuitar == 3)
-            {
-                jugadasAQuitar = jugadaUsuario ? 2 : 3;
-            }
-
-            var ultimasJugadas = Historial.SkipLast(jugadasAQuitar).ToList();
+            var ultimasJugadas = Historial.SkipLast(2).ToList();
 
             for (int f = 0; f < 8; f++)
                 for (int c = 0; c < 8; c++)
                     Tablero[f, c] = null;
 
-            Historial = new List<string>();
+            Historial = new List<string>(ultimasJugadas);
             InicializarTablero(); // Volver a colocar las piezas
 
             foreach (string jugada in ultimasJugadas)
-            {
-                Historial.Add(jugada);
                 MoverPieza(jugada, false);
-            }
 
             TableroActualizado?.Invoke();
         }

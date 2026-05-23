@@ -127,13 +127,30 @@ namespace Ajedrez_interactuable_con_form.Servicios
                     ? jugada : destinos[0];
 
                 JuegaUsuario(jugadaFinal);
+
+                bool esCoronacion = pieza?.Tipo == TipoPieza.Peon && jugadaFinal.Length == 4 &&
+                        ((fila == 0 && pieza?.EsBlanca == true) ||
+                         (fila == 7 && pieza?.EsBlanca == false));
+
+                if (esCoronacion)
+                {
+                    char eleccion = await _juego.EsperarCoronacion();
+                    jugadaFinal = jugadaFinal + eleccion; // completar jugada con la pieza elegida
+                }
+
+                _juego.RegistrarJugada(jugadaFinal);
+
                 _ = EscucharAnalisisContinuoAsync(turnoBlancasAlAnalizar : false);
 
                 _vista.AgregarJugadaHistorial("Blancas", jugadaFinal);
                 _vista.MostrarMensajeEstado($"Tu jugada: {jugadaFinal}");
 
                 var jugadasLegales = await _motor.PedirJugadasLegalesAsync(_juego.Historial);
-                if (jugadasLegales.Count == 0) OnSinJugadasLegales(jugabanBlancas: false);
+                if (jugadasLegales.Count == 0)
+                {
+                    OnSinJugadasLegales(jugabanBlancas: false);
+                    return;
+                }
 
                 OnBestMoveEncontrado(await _motor.PedirBestMove(_juego.Historial));
             }
@@ -154,12 +171,25 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private void JuegaUsuario(string jugada)
         {
-            _juego.RegistrarJugada(jugada, true);
+            _juego.RealizarJugada(jugada, true);
         }
 
-        private void JuegaStockfish(string bestMove)
+        private async Task JuegaStockfishAsync(string bestMove)
         {
-            _juego.RegistrarJugada(bestMove, false);
+            string origen = bestMove.Substring(0, 2);
+            int filaOrigen = 8 - (origen[1] - '0');
+            int columnaOrigen = origen[0] - 'a';
+
+            string destino = bestMove.Substring(2, 2);
+            int filaDestino = 8 - (destino[1] - '0');
+            int columnaDestino = destino[0] - 'a';
+
+            var pieza = _juego.ObtenerPieza(filaOrigen, columnaOrigen);
+            if (pieza != null)
+                await _vista.AnimarMovimientoAsync(pieza, filaDestino, columnaDestino);
+
+            _juego.RealizarJugada(bestMove, false);
+            _juego.RegistrarJugada(bestMove);
         }
 
         private async void OnBestMoveEncontrado(string bestMove) // maquina juega
@@ -170,7 +200,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
                 return;
             }
 
-            JuegaStockfish(bestMove);
+            await JuegaStockfishAsync(bestMove);
 
             _turnoUsuario = true;
 
@@ -235,8 +265,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
             if (_juego.Historial.Count < 2)
                 return;
 
-            if (_analista.UltimaEvaluacionFueMate) _juego.DeshacerJugadas(esMate : true);
-            else _juego.DeshacerJugadas();
+            _analista.DetenerAnalisis();
+            _juego.DeshacerJugadas();
             
             _turnoUsuario = true;
             _partidaTerminada = false;
@@ -254,6 +284,8 @@ namespace Ajedrez_interactuable_con_form.Servicios
             _vista.MostrarMensajeEstado("Jugada deshecha. Es tu turno.");
             _vista.ActualizarTablero();
             _vista.SincronizarTablero(_juego.Tablero);
+
+            _ = EscucharAnalisisContinuoAsync(true);
         }
     }
 }

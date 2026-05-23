@@ -216,7 +216,8 @@ namespace Ajedrez_interactuable_con_form
 
         private void LblUndo_Click(object sender, EventArgs e)
         {
-            UndoSolicitado?.Invoke();
+            if (LbxHistorial.Items.Count >= 2)
+                UndoSolicitado?.Invoke();
         }
 
         public void MostrarMovimientosPosibles(List<string> jugadas)
@@ -235,8 +236,10 @@ namespace Ajedrez_interactuable_con_form
 
         public void AgregarJugadaHistorial(string turno, string jugada)
         { 
-                LbxHistorial.Items.Add($"{turno}: {jugada}");
-                LbxHistorial.TopIndex = LbxHistorial.Items.Count - 1;
+            LbxHistorial.BeginUpdate();
+            LbxHistorial.Items.Add($"{turno}: {jugada}");
+            LbxHistorial.TopIndex = LbxHistorial.Items.Count - 1;
+            LbxHistorial.EndUpdate();
         }
 
         public void LimpiarHistorial()
@@ -251,34 +254,35 @@ namespace Ajedrez_interactuable_con_form
 
         public void MostrarJugadaStockfish(string jugada)
         {
-            this.Invoke(() =>
-            {
                 LblRespuesta.Text = $"Stockfish juega: {jugada}";
-            });
         }
 
         public void MostrarEvaluacionStockfish(int centipeones)
         {
-                _evaluacionActual = centipeones;
+            _evaluacionActual = centipeones;
 
-                string texto = centipeones >= 0
-                ? $"+{centipeones / 100.0:F1}"
-                : $"{centipeones / 100.0:F1}";
-                LblEvaluacionNumero.Text = texto;
+            string texto = centipeones >= 0
+            ? $"+{centipeones / 100.0:F1}"
+            : $"{centipeones / 100.0:F1}";
+            LblEvaluacionNumero.Text = texto;
 
-                PanelEvaluacion.Invalidate();
+            PanelEvaluacion.Invalidate();
 
-                comentarioActual = _evaluacionActual > 50 ? "¡Vas a Ganar!" :
-                                 _evaluacionActual < -50 ? "¡Vas a Perder!" :
-                                 "¡Partida equilibrada!";
-                timerGlobo.Start();
-                this.Invalidate();
+            comentarioActual = _evaluacionActual > 50 ? "¡Vas a Ganar!" :
+                               _evaluacionActual < -50 ? "¡Vas a Perder!" :
+                               "¡Partida equilibrada!";
+            timerGlobo.Start();
+            var areaGlobo = new Rectangle(
+                PbxRival.Left - 20,
+                PbxRival.Top -110,
+                PbxRival.Width + 40,
+                100
+                );
+            this.Invalidate();
         }
 
         public void MostrarFinPartida(ResultadoPartida resultado)
         {
-            this.Invoke(() =>
-            {
                 string mensaje = resultado switch
                 {
                     ResultadoPartida.GanaBlancas => "¡Jaque mate! Ganaste.",
@@ -289,7 +293,6 @@ namespace Ajedrez_interactuable_con_form
                     _ => "Partida terminada."
                 };
                 MessageBox.Show(mensaje);
-            });
         }
 
         public void ActualizarTablero()

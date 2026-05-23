@@ -18,6 +18,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
         private Process stockfish = null!;
         private StreamWriter? input = null;
+        private readonly SynchronizationContext? _contextoUI;
 
         private TaskCompletionSource<List<string>>? tcsJugadasLegales;
         private TaskCompletionSource<string>? tcsbestMove;
@@ -28,6 +29,10 @@ namespace Ajedrez_interactuable_con_form.Servicios
         // Evento para notificar jugadas
         public event Action? SinJugadasLegales;
 
+        public StockfishMotor()
+        {
+            _contextoUI = SynchronizationContext.Current;
+        }
         public void Iniciar(string rutaExe)
         {
             // parametros
@@ -142,7 +147,7 @@ namespace Ajedrez_interactuable_con_form.Servicios
 
                 if (partes.Length >= 2 && partes[1] == "(none)")
                 {
-                    SinJugadasLegales?.Invoke();
+                    _contextoUI?.Post(_ => SinJugadasLegales?.Invoke(), null);
                     tcsbestMove!.TrySetResult("");
                     _estadoActual = EstadoEspera.Ninguno;
                     return;
