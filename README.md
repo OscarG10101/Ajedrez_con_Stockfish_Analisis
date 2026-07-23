@@ -35,9 +35,10 @@ the Stockfish integration independently testable.
 ---
 
 ## Screenshots
-![Main Menu](Recursos/Referencias/Menu.png)
 
-![Gameplay](Recursos/Referencias/Partida.png)
+![Main Menu](Ajedrez%20interactuable%20con%20form/Recursos/Referencias/Menu.png)
+
+![Gameplay](Ajedrez%20interactuable%20con%20form/Recursos/Referencias/Partida.png)
 
 ---
 
