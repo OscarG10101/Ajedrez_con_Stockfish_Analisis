@@ -53,7 +53,7 @@ the Stockfish integration independently testable.
 
 ## Getting Started
 ```bash
-git clone https://github.com/yourusername/[repo-name].git
+git clone https://github.com/OscarG10101/ChessAnalysisStudio.git
 ```
 1. Download Stockfish from [stockfishchess.org](https://stockfishchess.org/download/)
    and place `stockfish.exe` in the `Stockfish/` folder at the project root.
